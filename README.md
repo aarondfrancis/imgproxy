@@ -1,6 +1,16 @@
 # Image Proxy for Laravel
 
-A Laravel package for on-the-fly image resizing and format conversion.
+On-the-fly image resizing and format conversion for Laravel. Transform images via URL parameters—no pre-processing, no storage bloat, just simple URLs that your CDN can cache.
+
+```html
+<!-- Original 4000x3000 image -->
+<img src="/img/w=800,f=webp/p/photos/hero.jpg">
+
+<!-- Thumbnail with exact dimensions -->
+<img src="/img/w=150,h=150,fit=cover/p/photos/avatar.jpg">
+```
+
+Upload once, serve any size. Let Cloudflare (or any CDN) cache the results at the edge.
 
 ## Installation
 
