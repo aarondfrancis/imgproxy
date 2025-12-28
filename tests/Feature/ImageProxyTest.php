@@ -157,6 +157,12 @@ it('rejects invalid fit mode', function () {
     $response->assertStatus(400);
 });
 
+it('rejects dimensions exceeding max', function () {
+    $response = $this->get('/img/w=5000/p/test-image.jpg');
+
+    $response->assertStatus(400);
+});
+
 it('allows v option as cache buster', function () {
     $response = $this->get('/img/w=100,v=2/p/test-image.jpg');
 

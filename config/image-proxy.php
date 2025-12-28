@@ -106,19 +106,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Allowed Dimensions
+    | Maximum Dimensions
     |--------------------------------------------------------------------------
     |
-    | To prevent cache-busting attacks with arbitrary dimensions, you may
-    | restrict the allowed width and height values to a whitelist. Set to
-    | null to allow any dimensions, or provide an array of allowed values.
-    |
-    | Example: [100, 200, 400, 800, 1200, 1600]
+    | Hard caps on the maximum width and height that can be requested. This
+    | prevents bad actors from requesting extremely large images to consume
+    | server resources. These limits apply regardless of allowed_widths or
+    | allowed_heights settings.
     |
     */
 
-    'allowed_widths' => null,
-    'allowed_heights' => null,
+    'max_width' => 2000,
+    'max_height' => 2000,
 
     /*
     |--------------------------------------------------------------------------

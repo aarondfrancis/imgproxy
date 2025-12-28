@@ -155,16 +155,18 @@ class ImageProxyController extends Controller
 
     protected function validateOptions(array $options): void
     {
-        $allowedWidths = config('image-proxy.allowed_widths');
-        $allowedHeights = config('image-proxy.allowed_heights');
+        $maxWidth = config('image-proxy.max_width', 2000);
+        $maxHeight = config('image-proxy.max_height', 2000);
         $allowedFormats = config('image-proxy.allowed_formats', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
 
-        if ($allowedWidths !== null && isset($options['width'])) {
-            abort_unless(in_array((int) $options['width'], $allowedWidths), 400, 'Invalid width');
+        if (isset($options['width'])) {
+            $width = (int) $options['width'];
+            abort_if($width < 1 || $width > $maxWidth, 400, 'Invalid width');
         }
 
-        if ($allowedHeights !== null && isset($options['height'])) {
-            abort_unless(in_array((int) $options['height'], $allowedHeights), 400, 'Invalid height');
+        if (isset($options['height'])) {
+            $height = (int) $options['height'];
+            abort_if($height < 1 || $height > $maxHeight, 400, 'Invalid height');
         }
 
         if (isset($options['format'])) {
@@ -173,12 +175,12 @@ class ImageProxyController extends Controller
 
         if (isset($options['quality'])) {
             $quality = (int) $options['quality'];
-            abort_unless($quality >= 1 && $quality <= 100, 400, 'Quality must be between 1 and 100');
+            abort_if($quality < 1 || $quality > 100, 400, 'Invalid quality');
         }
 
         if (isset($options['fit'])) {
             $allowedFits = ['scale', 'scaledown', 'cover', 'contain', 'crop'];
-            abort_unless(in_array(strtolower($options['fit']), $allowedFits), 400, 'Invalid fit mode');
+            abort_unless(in_array(strtolower($options['fit']), $allowedFits), 400, 'Invalid fit');
         }
     }
 

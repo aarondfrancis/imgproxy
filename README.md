@@ -126,13 +126,13 @@ For custom validation, use an invokable class:
 'path_validator' => App\ImageProxy\MyValidator::class,
 ```
 
-### Restrict Dimensions
+### Maximum Dimensions
 
-Whitelist allowed dimensions to prevent abuse:
+Hard caps to prevent abuse:
 
 ```php
-'allowed_widths' => [100, 200, 400, 800, 1200],
-'allowed_heights' => [100, 200, 400, 800],
+'max_width' => 2000,
+'max_height' => 2000,
 ```
 
 ### Allowed Formats
@@ -212,6 +212,18 @@ Route::get('images/{options}/{path}', [ImageProxyController::class, 'show'])
     ->where('path', '.*\.[a-zA-Z0-9]+')
     ->name('image-proxy.show');
 ```
+
+## Why No Server-Side Cache?
+
+This package intentionally does not cache processed images on the server. Here's why:
+
+1. **Storage bloat**: Every combination of image + options creates a new file. A single image with 10 width variations, 3 formats, and 5 quality levels = 150 cached files. Multiply by thousands of images and your storage explodes.
+
+2. **CDN is the cache**: The entire point of this architecture is to let your CDN cache the processed images at the edge. Configure your CDN to respect the `Cache-Control` headers (30 days by default) and you get global caching for free.
+
+3. **Simpler invalidation**: When you update an image, just change the `v` parameter. No need to purge server-side caches.
+
+**Recommended setup**: Put Cloudflare, Fastly, or any CDN in front of your app. The first request processes the image, subsequent requests are served from CDN cache.
 
 ## Requirements
 
