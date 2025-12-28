@@ -76,11 +76,10 @@ class ImageProxyController extends Controller
 
     protected function rateLimit(Request $request, string $path): void
     {
-        $prefix = config('image-proxy.rate_limit.key_prefix', 'image-proxy');
         $maxAttempts = config('image-proxy.rate_limit.max_attempts', 10);
 
         $allowed = RateLimiter::attempt(
-            key: $prefix . ':' . $request->ip() . ':' . $path,
+            key: 'imgproxy::' . $request->ip() . ':' . $path,
             maxAttempts: $maxAttempts,
             callback: fn () => true
         );

@@ -61,17 +61,15 @@ return [
     | Rate Limiting
     |--------------------------------------------------------------------------
     |
-    | To prevent abuse, you may enable rate limiting on image requests. When
-    | enabled, each unique combination of IP address and image path is limited
-    | to the specified number of requests. Rate limiting only applies in the
-    | production environment.
+    | Limit how many times a single IP can request the same image path per
+    | minute. This prevents abuse from requesting many different resize
+    | variations of the same image. Only applies in production.
     |
     */
 
     'rate_limit' => [
         'enabled' => true,
         'max_attempts' => 10,
-        'key_prefix' => 'image-proxy',
     ],
 
     /*

@@ -175,13 +175,12 @@ Configure the cache headers sent with responses:
 
 ### Rate Limiting
 
-Rate limiting is enabled by default in production:
+Limits requests per IP per image path (prevents abuse by requesting many resize variations). Enabled by default in production:
 
 ```php
 'rate_limit' => [
     'enabled' => true,
-    'max_attempts' => 10,
-    'key_prefix' => 'image-proxy',
+    'max_attempts' => 10,  // per minute
 ],
 ```
 
