@@ -27,16 +27,16 @@ return [
     |--------------------------------------------------------------------------
     |
     | Define the filesystem disks that the proxy can serve images from. Each
-    | entry maps a URL prefix to a Laravel filesystem disk. The empty string
-    | key defines the default disk used when no prefix matches.
+    | entry maps a URL prefix to a Laravel filesystem disk. Every source must
+    | have an explicit prefix - empty prefixes are not allowed.
     |
-    | For example, with 'r2' => 'r2', a request to /img/w=800/r2/photos/1.jpg
-    | will serve photos/1.jpg from the 'r2' disk.
+    | For example, /img/w=800/p/photos/1.jpg serves photos/1.jpg from the
+    | 'public' disk, and /img/w=800/r2/photos/1.jpg from the 'r2' disk.
     |
     */
 
     'sources' => [
-        '' => 'public',
+        'p' => 'public',
     ],
 
     /*

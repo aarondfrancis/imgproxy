@@ -51,10 +51,10 @@ Use the `v` option to bust browser and CDN caches when an image changes. The val
 
 ```html
 <!-- Original -->
-<img src="/img/w=400/photos/hero.jpg">
+<img src="/img/w=400/p/photos/hero.jpg">
 
 <!-- After updating the image, change v to bust caches -->
-<img src="/img/w=400,v=2/photos/hero.jpg">
+<img src="/img/w=400,v=2/p/photos/hero.jpg">
 ```
 
 Since the URL changes, browsers and CDNs will fetch the new version. Increment `v` each time the source image is updated.
@@ -63,41 +63,43 @@ Since the URL changes, browsers and CDNs will fetch the new version. Increment `
 
 ```html
 <!-- Resize to 400px width -->
-<img src="/img/w=400/images/photo.jpg">
+<img src="/img/w=400/p/images/photo.jpg">
 
 <!-- Resize and convert to WebP -->
-<img src="/img/w=400,f=webp/images/photo.jpg">
+<img src="/img/w=400,f=webp/p/images/photo.jpg">
 
 <!-- Cover crop to exact dimensions -->
-<img src="/img/w=800,h=600,fit=cover/images/photo.jpg">
+<img src="/img/w=800,h=600,fit=cover/p/images/photo.jpg">
 
 <!-- Multiple options -->
-<img src="/img/w=800,h=600,q=85,f=webp/images/photo.jpg">
+<img src="/img/w=800,h=600,q=85,f=webp/p/images/photo.jpg">
 ```
 
 ## Configuration
 
 ### Sources
 
-Configure image sources in `config/image-proxy.php`. Each source maps a URL prefix to a filesystem disk:
+Configure image sources in `config/image-proxy.php`. Each source maps a URL prefix to a filesystem disk. Every source requires an explicit prefix:
 
 ```php
 'sources' => [
-    '' => 'public',     // Default: serves from 'public' disk
+    'p' => 'public',    // /img/w=800/p/path serves from 'public' disk
     'r2' => 'r2',       // /img/w=800/r2/path serves from 'r2' disk
     'media' => 's3',    // /img/w=800/media/path serves from 's3' disk
 ],
 ```
 
-Usage with source prefix:
+Usage:
 
 ```html
 <!-- Serves from 'public' disk -->
-<img src="/img/width=400/images/photo.jpg">
+<img src="/img/w=400/p/images/photo.jpg">
 
 <!-- Serves from 'r2' disk -->
-<img src="/img/width=400/r2/images/photo.jpg">
+<img src="/img/w=400/r2/images/photo.jpg">
 ```
+
+Requests with an unknown source prefix return 404.
 
 ### Path Validation
 

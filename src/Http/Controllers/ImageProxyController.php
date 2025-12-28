@@ -92,7 +92,7 @@ class ImageProxyController extends Controller
 
     protected function resolveDisk(string $path): array
     {
-        $sources = config('image-proxy.sources', ['' => 'public']);
+        $sources = config('image-proxy.sources', ['p' => 'public']);
 
         foreach ($sources as $prefix => $disk) {
             if ($prefix === '') {
@@ -106,7 +106,7 @@ class ImageProxyController extends Controller
             }
         }
 
-        return [$sources[''] ?? 'public', $path];
+        abort(404, 'Unknown source');
     }
 
     protected function validatePath(string $disk, string $path): void
