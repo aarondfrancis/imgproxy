@@ -7,6 +7,8 @@
         { "slug": "usage", "title": "Usage" },
         { "slug": "url-builder", "title": "URL Builder" },
         { "slug": "configuration", "title": "Configuration" },
-        { "slug": "path-validation", "title": "Path Validation" }
+        { "slug": "path-validation", "title": "Path Validation" },
+        { "slug": "api-reference", "title": "API Reference" },
+        { "slug": "troubleshooting", "title": "Troubleshooting" }
     ]
 }

@@ -156,6 +156,30 @@ Since the URL changes, browsers and CDNs fetch the new version.
 </picture>
 ```
 
+## Error Responses
+
+ImgProxy returns appropriate HTTP status codes for various error conditions:
+
+| Status | Condition |
+|--------|-----------|
+| 200 | Success — image processed and returned |
+| 400 | Invalid options — width/height exceeds max, invalid quality (not 1-100), invalid format, invalid fit mode |
+| 403 | Forbidden — directory traversal attempt (`..` in path) or path validation failed |
+| 404 | Not found — unknown source or image file doesn't exist |
+| 429 | Too many requests — rate limit exceeded (production only) |
+
+### Examples
+
+```
+/w=5000/images/photo.jpg        → 400 (exceeds max_width)
+/q=150/images/photo.jpg         → 400 (quality must be 1-100)
+/f=bmp/images/photo.jpg         → 400 (format not allowed)
+/fit=stretch/images/photo.jpg   → 400 (invalid fit mode)
+/w=400/images/../secret.jpg     → 403 (directory traversal)
+/w=400/unknown/photo.jpg        → 404 (unknown source)
+/w=400/images/missing.jpg       → 404 (file not found)
+```
+
 ## Next Steps
 
 - [URL Builder](url-builder.md) — Generate URLs programmatically
