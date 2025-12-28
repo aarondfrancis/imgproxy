@@ -1,4 +1,4 @@
-# Image Proxy for Laravel
+# ImgProxy for Laravel
 
 On-the-fly image resizing and format conversion for Laravel. Transform images via URL parameters—no pre-processing, no
 cache bloat, just simple URLs that your CDN can cache.
@@ -9,6 +9,9 @@ cache bloat, just simple URLs that your CDN can cache.
 
 <!-- Thumbnail with exact dimensions -->
 <img src="/w=150,h=150,fit=cover/images/avatar.jpg">
+
+<!-- Nested paths work too -->
+<img src="/w=400/images/photos/2024/january/photo.jpg">
 ```
 
 Upload once, serve any size. Let Cloudflare (or any CDN) cache the results at the edge.
@@ -33,9 +36,11 @@ The package automatically registers a route for image proxying:
 /{options}/{source}/{path}
 ```
 
-### Options
+- `{options}` — comma-separated key=value pairs (e.g., `w=400,f=webp`)
+- `{source}` — configured source name (validated against your config)
+- `{path}` — path to the image, can include subdirectories
 
-Options are comma-separated key=value pairs:
+### Options
 
 | Option    | Alias | Description                         | Example     |
 |-----------|-------|-------------------------------------|-------------|
@@ -86,48 +91,50 @@ updated.
 
 <!-- Multiple options -->
 <img src="/w=800,h=600,q=85,f=webp/images/photo.jpg">
+
+<!-- Different source -->
+<img src="/w=400/media/uploads/photo.jpg">
 ```
 
 ## Configuration
 
 ### Sources
 
-Configure image sources in `config/imgproxy.php`. Each source maps a URL prefix to a filesystem disk. Every source
-requires an explicit prefix:
+Configure image sources in `config/imgproxy.php`. Each source maps a URL prefix to a Laravel filesystem disk:
 
 ```php
 'sources' => [
-    // /w=800/images/{path} serves from 'public' disk
+    // /w=800/images/photo.jpg serves photo.jpg from 'public' disk
     'images' => [
-        // Use the public disk 
-        'disk' =>'public',
-        
-        // Starting in the /images directory
-        'root' =>'images', 
-        
-        // Only allow jpg and pngs
-        'validator' => PathValidator::extensions(['jpg', 'png'])
-    ],   
-    
-    // /w=800/r2/{path} serves from 'r2' disk
-    'r2' => [
-        'disk' => 'r2',
-        
-        // Only allow these two directories.  
-        'path_validator' => PathValidator::directories(['images', 'uploads'])
+        'disk' => 'public',
     ],
-    
-    // /w=800/media/{path} serves from 's3' disk
+
+    // /w=800/uploads/photo.jpg serves from 'public' disk's uploads/ directory
+    'uploads' => [
+        'disk' => 'public',
+        'root' => 'uploads',  // prepended to all paths
+    ],
+
+    // /w=800/media/photo.jpg serves from 's3' disk with validation
     'media' => [
-        'disk' =>'s3',
-        
-        // Use a custom validator
-        'path_validator' => App\Validators\S3PublicPathValidator::class
-    ],  
+        'disk' => 's3',
+        'validator' => PathValidator::extensions(['jpg', 'png', 'webp']),
+    ],
 ],
 ```
 
-Requests with an unknown source prefix return 404.
+Source options:
+
+| Option      | Description                                           |
+|-------------|-------------------------------------------------------|
+| `disk`      | Laravel filesystem disk name                          |
+| `root`      | Directory prepended to all paths (optional)           |
+| `validator` | PathValidator or custom class for path validation     |
+
+The `root` option is useful when you want a short URL prefix but files are stored in a subdirectory. For example, with
+`'root' => 'uploads'`, a request to `/w=400/media/photo.jpg` loads `uploads/photo.jpg` from the disk.
+
+Unknown sources return 404 at the routing level.
 
 ### Path Validation
 
@@ -140,26 +147,40 @@ use AaronFrancis\ImgProxy\PathValidator;
 PathValidator::directories(['images', 'uploads'])
 
 // Only allow paths matching glob patterns
-PathValidator::matches(['images/**/*.jpg', 'photos/*.png'])
+PathValidator::matches(['**/*.jpg', '**/*.png'])
 
 // Only allow certain extensions
-PathValidator::extensions(['jpg', 'png'])
+PathValidator::extensions(['jpg', 'png', 'webp'])
 
-// Combine them (chain in any order)
-PathValidator::directories(['images', 'uploads'])->extensions(['jpg', 'png'])
-PathValidator::extensions(['jpg', 'png'])->directories(['images', 'uploads'])
+// Chain them in any order
+PathValidator::directories(['uploads'])->extensions(['jpg', 'png'])
+PathValidator::extensions(['jpg', 'png'])->directories(['uploads'])
 ```
 
-Using the `matches` validator, the follow syntax applies:
+Pattern syntax for `matches()`:
 
 - `*` matches any characters except `/`
 - `**` matches any characters including `/`
 - `?` matches a single character
 
-For custom validation, use an invokable class that implements the `PathValidatorContract`:
+The validator receives the full path including the `root` prefix, so you can validate the complete filesystem path.
+
+For custom validation, implement `PathValidatorContract`:
 
 ```php
-'path_validator' => App\Validators\S3PublicPathValidator::class,
+use AaronFrancis\ImgProxy\Contracts\PathValidatorContract;
+
+class MyValidator implements PathValidatorContract
+{
+    public function validate(string $path): bool
+    {
+        // Your validation logic
+        return true;
+    }
+}
+
+// In config
+'validator' => MyValidator::class,
 ```
 
 ### Maximum Dimensions
@@ -221,15 +242,15 @@ Customize the route prefix, middleware, and name:
 ```php
 'route' => [
     'enabled' => true,
-    'prefix' => null,            // /{options}/{path}
+    'prefix' => null,            // /{options}/{source}/{path}
     'middleware' => [],
-    'name' => 'image-proxy.show',
+    'name' => 'imgproxy.show',
 ],
 ```
 
 Avoid middleware that starts sessions or sets cookies—these prevent CDN caching.
 
-Set a prefix if you prefer URLs like `/img/{options}/{path}`:
+Set a prefix if you prefer URLs like `/img/{options}/{source}/{path}`:
 
 ```php
 'prefix' => 'img',
@@ -248,9 +269,10 @@ Disable the default route and register your own:
 // routes/web.php
 use AaronFrancis\ImgProxy\Http\Controllers\ImgProxyController;
 
-Route::get('images/{options}/{path}', [ImgProxyController::class, 'show'])
+Route::get('{options}/{source}/{path}', [ImgProxyController::class, 'show'])
     ->where('options', '([a-zA-Z]+=[a-zA-Z0-9]+,?)+')
-    ->where('path', '.*\.[a-zA-Z0-9]+')
+    ->whereIn('source', array_keys(config('imgproxy.sources')))
+    ->where('path', '.+\.[a-zA-Z0-9]+')
     ->name('imgproxy.show');
 ```
 
