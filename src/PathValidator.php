@@ -9,6 +9,11 @@ class PathValidator
 
     public function __invoke(string $disk, string $path): bool
     {
+        // Always block directory traversal
+        if (str_contains($path, '..')) {
+            return false;
+        }
+
         if ($this->directories) {
             foreach ($this->directories as $dir) {
                 $dir = rtrim($dir, '/') . '/';
@@ -29,6 +34,14 @@ class PathValidator
         }
 
         return true;
+    }
+
+    /**
+     * Default validator that only blocks directory traversal.
+     */
+    public static function secure(): static
+    {
+        return new static;
     }
 
     /**

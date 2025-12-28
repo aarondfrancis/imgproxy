@@ -8,6 +8,20 @@ it('allows any path by default', function () {
     expect($validator('public', 'anything/here.jpg'))->toBeTrue();
 });
 
+it('always blocks directory traversal', function () {
+    $validator = PathValidator::secure();
+
+    expect($validator('public', '../etc/passwd'))->toBeFalse();
+    expect($validator('public', 'images/../../../etc/passwd'))->toBeFalse();
+    expect($validator('public', 'images/photo.jpg'))->toBeTrue();
+});
+
+it('blocks traversal even with directories configured', function () {
+    $validator = PathValidator::directories('images');
+
+    expect($validator('public', 'images/../etc/passwd'))->toBeFalse();
+});
+
 it('restricts to specific directories', function () {
     $validator = PathValidator::directories('images', 'uploads');
 
