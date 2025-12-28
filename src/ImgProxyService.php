@@ -4,6 +4,7 @@ namespace AaronFrancis\ImgProxy;
 
 use AaronFrancis\ImgProxy\Contracts\PathValidatorContract;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ImgProxyService
 {
@@ -27,17 +28,17 @@ class ImgProxyService
         // Always block directory traversal first
         abort_if(str_contains($path, '..'), 403, 'Directory traversal not allowed');
 
-        // Build full path with root
-        $fullPath = $config['root']
-            ? rtrim($config['root'], '/') . '/' . $path
-            : $path;
+        // Prepend root if configured
+        if ($config['root']) {
+            $path = Str::start($path, rtrim($config['root'], '/') . '/');
+        }
 
         // Validate the full path (user validator sees the complete path including root)
-        $this->validatePath($fullPath, $config);
+        $this->validatePath($path, $config);
 
         return [
             'disk' => $config['disk'],
-            'path' => $fullPath,
+            'path' => $path,
             'config' => $config,
         ];
     }
