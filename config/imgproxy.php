@@ -93,6 +93,8 @@ return [
     'cache' => [
         'max_age' => 2592000,
         's_maxage' => 2592000,
+        'stale_while_revalidate' => 86400,
+        'stale_if_error' => 86400,
         'immutable' => true,
     ],
 

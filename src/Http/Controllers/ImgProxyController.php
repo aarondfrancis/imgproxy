@@ -156,6 +156,14 @@ class ImgProxyController extends Controller
             $parts[] = 's-maxage=' . $sMaxAge;
         }
 
+        if ($staleWhileRevalidate = Arr::get($config, 'stale_while_revalidate')) {
+            $parts[] = 'stale-while-revalidate=' . $staleWhileRevalidate;
+        }
+
+        if ($staleIfError = Arr::get($config, 'stale_if_error')) {
+            $parts[] = 'stale-if-error=' . $staleIfError;
+        }
+
         if (Arr::get($config, 'immutable', true)) {
             $parts[] = 'immutable';
         }

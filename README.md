@@ -214,11 +214,16 @@ Configure the cache headers sent with responses:
 
 ```php
 'cache' => [
-    'max_age' => 2592000,  // 30 days
-    's_maxage' => 2592000, // CDN cache
+    'max_age' => 2592000,              // 30 days browser cache
+    's_maxage' => 2592000,             // 30 days CDN cache
+    'stale_while_revalidate' => 86400, // Serve stale for 1 day while revalidating
+    'stale_if_error' => 86400,         // Serve stale for 1 day if origin errors
     'immutable' => true,
 ],
 ```
+
+- `stale_while_revalidate` — When cache expires, CDN serves stale content while fetching fresh in background
+- `stale_if_error` — If origin is unavailable, CDN continues serving stale content instead of errors
 
 ### Rate Limiting
 
@@ -242,8 +247,12 @@ Customize the route prefix, middleware, and name:
 ```php
 'route' => [
     'enabled' => true,
-    'prefix' => null,            // /{options}/{source}/{path}
-    'middleware' => [],
+    // By default this is null, so it serves from root: /{options}/{source}/{path}
+    // Add a prefix (e.g. "transform") to serve from a path: /transform/{options}/{source}/{path}
+    'prefix' => null,            
+    'middleware' => [
+        // Ensure your middleware don't start sessions or include cookies! This will prevent caching.
+    ],
     'name' => 'imgproxy.show',
 ],
 ```
