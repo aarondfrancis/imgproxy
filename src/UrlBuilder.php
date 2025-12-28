@@ -5,6 +5,12 @@ namespace AaronFrancis\ImgProxy;
 use Illuminate\Contracts\Support\Htmlable;
 use Stringable;
 
+/**
+ * Fluent builder for constructing image proxy URLs.
+ *
+ * Provides a chainable API for setting image transformation options
+ * and generates properly formatted URLs for the image proxy endpoint.
+ */
 class UrlBuilder implements Stringable, Htmlable
 {
     protected ?int $width = null;
@@ -19,6 +25,12 @@ class UrlBuilder implements Stringable, Htmlable
         protected string $path
     ) {}
 
+    /**
+     * Set the target width in pixels.
+     *
+     * @param  int  $width  Width in pixels
+     * @return static
+     */
     public function width(int $width): static
     {
         $this->width = $width;
@@ -31,6 +43,12 @@ class UrlBuilder implements Stringable, Htmlable
         return $this->width($width);
     }
 
+    /**
+     * Set the target height in pixels.
+     *
+     * @param  int  $height  Height in pixels
+     * @return static
+     */
     public function height(int $height): static
     {
         $this->height = $height;
@@ -43,6 +61,12 @@ class UrlBuilder implements Stringable, Htmlable
         return $this->height($height);
     }
 
+    /**
+     * Set the output format.
+     *
+     * @param  string  $format  Output format (jpg, png, gif, webp)
+     * @return static
+     */
     public function format(string $format): static
     {
         $this->format = $format;
@@ -75,6 +99,12 @@ class UrlBuilder implements Stringable, Htmlable
         return $this->format('gif');
     }
 
+    /**
+     * Set the output quality for lossy formats.
+     *
+     * @param  int  $quality  Quality from 1-100
+     * @return static
+     */
     public function quality(int $quality): static
     {
         $this->quality = $quality;
@@ -87,6 +117,12 @@ class UrlBuilder implements Stringable, Htmlable
         return $this->quality($quality);
     }
 
+    /**
+     * Set the resize fit mode.
+     *
+     * @param  string  $fit  Fit mode (scale, scaledown, cover, contain, crop)
+     * @return static
+     */
     public function fit(string $fit): static
     {
         $this->fit = $fit;
@@ -131,6 +167,11 @@ class UrlBuilder implements Stringable, Htmlable
         return $this->v($version);
     }
 
+    /**
+     * Get the generated URL string.
+     *
+     * @return string  The complete image proxy URL
+     */
     public function url(): string
     {
         return (string) $this;
@@ -141,6 +182,11 @@ class UrlBuilder implements Stringable, Htmlable
         return $this->url();
     }
 
+    /**
+     * Convert the builder to a URL string.
+     *
+     * @return string  The complete image proxy URL
+     */
     public function __toString(): string
     {
         $options = $this->buildOptions();

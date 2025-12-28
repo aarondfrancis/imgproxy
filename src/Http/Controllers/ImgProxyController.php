@@ -23,6 +23,15 @@ class ImgProxyController extends Controller
         protected ImgProxyService $service
     ) {}
 
+    /**
+     * Process and serve a resized/transformed image.
+     *
+     * @param  Request  $request  The incoming HTTP request
+     * @param  string  $options  Comma-separated transformation options (e.g., "w=300,h=200,f=webp")
+     * @param  string  $source  The configured source identifier
+     * @param  string  $path  Path to the image within the source
+     * @return Response  The processed image with appropriate headers
+     */
     public function show(Request $request, string $options, string $source, string $path): Response
     {
         if ($this->shouldRateLimit()) {
@@ -89,6 +98,14 @@ class ImgProxyController extends Controller
         }
     }
 
+    /**
+     * Parse URL options string into an associative array.
+     *
+     * Supports aliases: w=width, h=height, q=quality, f=format.
+     *
+     * @param  string  $options  Comma-separated key=value pairs
+     * @return array<string, string|null>  Parsed options with aliases resolved
+     */
     protected function parseOptions(string $options): array
     {
         $aliases = [
@@ -110,6 +127,14 @@ class ImgProxyController extends Controller
             ->toArray();
     }
 
+    /**
+     * Validate transformation options against configured limits.
+     *
+     * @param  array<string, mixed>  $options  Parsed options to validate
+     * @return void
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException  If validation fails
+     */
     protected function validateOptions(array $options): void
     {
         $maxWidth = config('imgproxy.max_width', 2000);
@@ -141,6 +166,11 @@ class ImgProxyController extends Controller
         }
     }
 
+    /**
+     * Build the Cache-Control header value from config.
+     *
+     * @return string  Cache-Control header value
+     */
     protected function buildCacheControl(): string
     {
         $config = config('imgproxy.cache', []);

@@ -44,7 +44,16 @@ return [
     'sources' => [
         'images' => [
             'disk' => 'public',
+            // 'root' => null,      // Optional: subdirectory within disk
+            // 'validator' => null, // Optional: PathValidator instance or class
         ],
+
+        // Example with all options:
+        // 'uploads' => [
+        //     'disk' => 'public',
+        //     'root' => 'uploads',
+        //     'validator' => \AaronFrancis\ImgProxy\PathValidator::extensions(['jpg', 'png', 'webp']),
+        // ],
     ],
 
     /*
@@ -91,10 +100,10 @@ return [
     */
 
     'cache' => [
-        'max_age' => 2592000,
-        's_maxage' => 2592000,
-        'stale_while_revalidate' => 86400,
-        'stale_if_error' => 86400,
+        'max_age' => 2592000,                  // 30 days
+        's_maxage' => 2592000,                 // 30 days (for CDN/proxy caches)
+        'stale_while_revalidate' => 86400,     // 1 day
+        'stale_if_error' => 86400,             // 1 day
         'immutable' => true,
     ],
 

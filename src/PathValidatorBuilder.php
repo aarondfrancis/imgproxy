@@ -4,6 +4,12 @@ namespace AaronFrancis\ImgProxy;
 
 use AaronFrancis\ImgProxy\Contracts\PathValidatorContract;
 
+/**
+ * Fluent builder for creating path validation rules.
+ *
+ * Allows combining multiple constraints (directories, patterns, extensions)
+ * that are evaluated using AND logic - all configured constraints must pass.
+ */
 class PathValidatorBuilder implements PathValidatorContract
 {
     protected array $directories = [];
@@ -12,6 +18,15 @@ class PathValidatorBuilder implements PathValidatorContract
 
     protected array $extensions = [];
 
+    /**
+     * Validate a path against all configured constraints.
+     *
+     * Uses AND logic: if directories, patterns, and extensions are all configured,
+     * the path must satisfy at least one item from each category.
+     *
+     * @param  string  $path  The path to validate
+     * @return bool  True if path passes all constraints
+     */
     public function validate(string $path): bool
     {
         if (str_contains($path, '..')) {
@@ -84,6 +99,19 @@ class PathValidatorBuilder implements PathValidatorContract
         return in_array($ext, array_map('strtolower', $this->extensions));
     }
 
+    /**
+     * Match a path against a glob-style pattern.
+     *
+     * Supported patterns:
+     *   - ** /  matches any directories (including none)
+     *   - **   matches anything including slashes
+     *   - *    matches anything except slashes
+     *   - ?    matches a single character
+     *
+     * @param  string  $path  The path to check
+     * @param  string  $pattern  The glob pattern
+     * @return bool  True if the path matches the pattern
+     */
     protected function matchesPattern(string $path, string $pattern): bool
     {
         $regex = preg_quote($pattern, '#');

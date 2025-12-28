@@ -11,6 +11,8 @@ class ImgProxyService
     /**
      * Resolve a source and path to disk, full path, and source config.
      *
+     * @param  string  $source  The configured source identifier
+     * @param  string  $path  The image path within the source
      * @return array{disk: string, path: string, config: array}
      *
      * @throws \Symfony\Component\HttpKernel\Exception\HttpException
@@ -45,6 +47,9 @@ class ImgProxyService
 
     /**
      * Normalize source config to array format.
+     *
+     * @param  array|string  $config  Source config (string disk name or full config array)
+     * @return array{disk: string, root: string|null, validator: mixed}
      */
     protected function normalizeConfig(array|string $config): array
     {
@@ -65,6 +70,10 @@ class ImgProxyService
 
     /**
      * Validate the path against custom validators.
+     *
+     * @param  string  $fullPath  The full path including any configured root
+     * @param  array  $config  The normalized source configuration
+     * @return void
      *
      * @throws \Symfony\Component\HttpKernel\Exception\HttpException
      */
@@ -89,6 +98,10 @@ class ImgProxyService
 
     /**
      * Load an image from disk.
+     *
+     * @param  string  $disk  The filesystem disk name
+     * @param  string  $path  The path to the image file
+     * @return string  The raw image data
      *
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      */
