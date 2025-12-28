@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\RateLimiter;
@@ -142,7 +141,7 @@ class ImageProxyController extends Controller
 
     protected function parseOptions(string $options): array
     {
-        return Collection::explode(',', $options)
+        return collect(explode(',', $options))
             ->mapWithKeys(function ($opt) {
                 $parts = explode('=', $opt, 2);
 
