@@ -1,35 +1,35 @@
 <?php
 
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
-    // Create a test image in the public directory
-    $testImagePath = public_path('test-image.jpg');
+    // Create a 200x100 test image (2:1 aspect ratio)
+    $image = imagecreatetruecolor(200, 100);
+    $red = imagecolorallocate($image, 255, 0, 0);
+    imagefill($image, 0, 0, $red);
 
-    if (!File::exists($testImagePath)) {
-        // Create a simple 1x1 red JPEG
-        $image = imagecreatetruecolor(100, 100);
-        $red = imagecolorallocate($image, 255, 0, 0);
-        imagefill($image, 0, 0, $red);
-        imagejpeg($image, $testImagePath);
-        imagedestroy($image);
-    }
+    ob_start();
+    imagejpeg($image);
+    $imageData = ob_get_clean();
+    imagedestroy($image);
+
+    Storage::disk('public')->put('test-image.jpg', $imageData);
 });
 
 afterEach(function () {
-    $testImagePath = public_path('test-image.jpg');
-
-    if (File::exists($testImagePath)) {
-        File::delete($testImagePath);
-    }
+    Storage::disk('public')->delete('test-image.jpg');
 });
 
 it('resizes an image with width option', function () {
-    $response = $this->get('/img/width=50/test-image.jpg');
+    $response = $this->get('/img/width=100/test-image.jpg');
 
     $response->assertStatus(200);
     $response->assertHeader('Content-Type', 'image/jpeg');
     $response->assertHeader('Cache-Control');
+
+    $image = imagecreatefromstring($response->getContent());
+    expect(imagesx($image))->toBe(100);
+    expect(imagesy($image))->toBe(50); // maintains 2:1 aspect ratio
 });
 
 it('converts an image to webp format', function () {
@@ -58,13 +58,104 @@ it('validates quality option range', function () {
 });
 
 it('accepts valid quality option', function () {
-    $response = $this->get('/img/quality=80/test-image.jpg');
+    $response = $this->get('/img/q=80/test-image.jpg');
 
     $response->assertStatus(200);
+
+    // Verify it's a valid image and quality affects file size
+    $lowQuality = $this->get('/img/q=10/test-image.jpg');
+    $highQuality = $this->get('/img/q=100/test-image.jpg');
+
+    expect(strlen($lowQuality->getContent()))->toBeLessThan(strlen($highQuality->getContent()));
 });
 
 it('supports multiple options', function () {
-    $response = $this->get('/img/width=50,height=50,quality=80/test-image.jpg');
+    $response = $this->get('/img/w=50,h=25,fit=cover,q=80/test-image.jpg');
 
     $response->assertStatus(200);
+
+    $image = imagecreatefromstring($response->getContent());
+    expect(imagesx($image))->toBe(50);
+    expect(imagesy($image))->toBe(25);
+});
+
+it('supports option aliases', function () {
+    $response = $this->get('/img/w=100,h=50,f=webp/test-image.jpg');
+
+    $response->assertStatus(200);
+    $response->assertHeader('Content-Type', 'image/webp');
+
+    $image = imagecreatefromstring($response->getContent());
+    expect(imagesx($image))->toBe(100);
+    expect(imagesy($image))->toBe(50);
+});
+
+it('supports fit=cover mode', function () {
+    // cover crops to fill exact dimensions
+    $response = $this->get('/img/w=50,h=50,fit=cover/test-image.jpg');
+
+    $response->assertStatus(200);
+
+    $image = imagecreatefromstring($response->getContent());
+    expect(imagesx($image))->toBe(50);
+    expect(imagesy($image))->toBe(50);
+});
+
+it('supports fit=contain mode', function () {
+    // contain fits inside dimensions with padding
+    $response = $this->get('/img/w=100,h=100,fit=contain/test-image.jpg');
+
+    $response->assertStatus(200);
+
+    $image = imagecreatefromstring($response->getContent());
+    expect(imagesx($image))->toBe(100);
+    expect(imagesy($image))->toBe(100); // padded to fit
+});
+
+it('supports fit=scale mode', function () {
+    // scale maintains aspect ratio
+    $response = $this->get('/img/w=100,h=100,fit=scale/test-image.jpg');
+
+    $response->assertStatus(200);
+
+    $image = imagecreatefromstring($response->getContent());
+    expect(imagesx($image))->toBe(100);
+    expect(imagesy($image))->toBe(50); // maintains 2:1 ratio
+});
+
+it('supports fit=crop mode', function () {
+    // crop extracts exact dimensions from center
+    $response = $this->get('/img/w=50,h=50,fit=crop/test-image.jpg');
+
+    $response->assertStatus(200);
+
+    $image = imagecreatefromstring($response->getContent());
+    expect(imagesx($image))->toBe(50);
+    expect(imagesy($image))->toBe(50);
+});
+
+it('supports fit=scaledown mode', function () {
+    // scaledown only shrinks, never enlarges
+    $response = $this->get('/img/w=100,fit=scaledown/test-image.jpg');
+
+    $response->assertStatus(200);
+
+    $image = imagecreatefromstring($response->getContent());
+    expect(imagesx($image))->toBe(100);
+    expect(imagesy($image))->toBe(50);
+});
+
+it('rejects invalid fit mode', function () {
+    $response = $this->get('/img/w=50,fit=invalid/test-image.jpg');
+
+    $response->assertStatus(400);
+});
+
+it('allows v option as cache buster', function () {
+    $response = $this->get('/img/w=100,v=2/test-image.jpg');
+
+    $response->assertStatus(200);
+
+    $image = imagecreatefromstring($response->getContent());
+    expect(imagesx($image))->toBe(100);
 });

@@ -30,10 +30,14 @@ class ImageProxyServiceProvider extends ServiceProvider
 
         Route::middleware($config['middleware'] ?? ['web'])
             ->group(function () use ($config) {
-                $prefix = $config['prefix'] ?? 'img';
+                $prefix = $config['prefix'] ?? null;
                 $name = $config['name'] ?? 'image-proxy.show';
 
-                Route::get("{$prefix}/{options}/{path}", [ImageProxyController::class, 'show'])
+                $uri = $prefix
+                    ? "{$prefix}/{options}/{path}"
+                    : "{options}/{path}";
+
+                Route::get($uri, [ImageProxyController::class, 'show'])
                     ->where('options', '([a-zA-Z]+=[a-zA-Z0-9]+,?)+')
                     ->where('path', '.*\.[a-zA-Z0-9]+')
                     ->name($name);

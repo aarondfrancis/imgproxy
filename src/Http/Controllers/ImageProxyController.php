@@ -8,7 +8,6 @@ use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
@@ -27,11 +26,11 @@ class ImageProxyController extends Controller
             $this->rateLimit($request, $path);
         }
 
-        [$source, $resolvedPath] = $this->resolveSource($path);
+        [$disk, $resolvedPath] = $this->resolveDisk($path);
 
-        $this->validatePath($source, $resolvedPath);
+        $this->validatePath($disk, $resolvedPath);
 
-        $imageData = $this->loadImage($source, $resolvedPath);
+        $imageData = $this->loadImage($disk, $resolvedPath);
         $extension = pathinfo($resolvedPath, PATHINFO_EXTENSION);
 
         $image = Image::read($imageData);
@@ -42,8 +41,15 @@ class ImageProxyController extends Controller
         if (Arr::hasAny($parsedOptions, ['width', 'height'])) {
             $width = $parsedOptions['width'] ?? null;
             $height = $parsedOptions['height'] ?? null;
+            $fit = $parsedOptions['fit'] ?? 'scaledown';
 
-            $image->scaleDown(width: $width, height: $height);
+            $image = match ($fit) {
+                'scale' => $image->scale(width: $width, height: $height),
+                'cover' => $image->cover((int) $width, (int) $height),
+                'contain' => $image->contain((int) $width, (int) $height),
+                'crop' => $image->crop((int) $width, (int) $height),
+                default => $image->scaleDown(width: $width, height: $height),
+            };
         }
 
         $quality = (int) Arr::get($parsedOptions, 'quality', config('image-proxy.default_quality', 85));
@@ -84,11 +90,11 @@ class ImageProxyController extends Controller
         }
     }
 
-    protected function resolveSource(string $path): array
+    protected function resolveDisk(string $path): array
     {
         $sources = config('image-proxy.sources', ['' => 'public']);
 
-        foreach ($sources as $prefix => $resolver) {
+        foreach ($sources as $prefix => $disk) {
             if ($prefix === '') {
                 continue;
             }
@@ -96,56 +102,49 @@ class ImageProxyController extends Controller
             if (Str::startsWith($path, $prefix . '/')) {
                 $resolvedPath = Str::after($path, $prefix . '/');
 
-                return [$resolver, $resolvedPath];
+                return [$disk, $resolvedPath];
             }
         }
 
         return [$sources[''] ?? 'public', $path];
     }
 
-    protected function validatePath(string $source, string $path): void
+    protected function validatePath(string $disk, string $path): void
     {
         $validator = config('image-proxy.path_validator');
 
         if ($validator && is_callable($validator)) {
-            abort_unless($validator($source, $path), 403);
+            abort_unless($validator($disk, $path), 403);
         }
 
         // Always prevent directory traversal
         abort_if(str_contains($path, '..'), 403);
     }
 
-    protected function loadImage(string $source, string $path): string
+    protected function loadImage(string $disk, string $path): string
     {
-        if ($source === 'public') {
-            $fullPath = public_path($path);
-            abort_unless(File::exists($fullPath), 404);
+        abort_unless(Storage::disk($disk)->exists($path), 404);
 
-            return File::get($fullPath);
-        }
-
-        if (Str::startsWith($source, 'storage:')) {
-            $disk = Str::after($source, 'storage:');
-            abort_unless(Storage::disk($disk)->exists($path), 404);
-
-            return Storage::disk($disk)->get($path);
-        }
-
-        // Custom resolver (callable)
-        if (is_callable($source)) {
-            return $source($path);
-        }
-
-        abort(500, 'Invalid image source configuration');
+        return Storage::disk($disk)->get($path);
     }
 
     protected function parseOptions(string $options): array
     {
+        $aliases = [
+            'w' => 'width',
+            'h' => 'height',
+            'q' => 'quality',
+            'f' => 'format',
+        ];
+
         return collect(explode(',', $options))
             ->mapWithKeys(function ($opt) {
                 $parts = explode('=', $opt, 2);
 
                 return [$parts[0] => $parts[1] ?? null];
+            })
+            ->mapWithKeys(function ($value, $key) use ($aliases) {
+                return [Arr::get($aliases, $key, $key) => $value];
             })
             ->toArray();
     }
@@ -171,6 +170,11 @@ class ImageProxyController extends Controller
         if (isset($options['quality'])) {
             $quality = (int) $options['quality'];
             abort_unless($quality >= 1 && $quality <= 100, 400, 'Quality must be between 1 and 100');
+        }
+
+        if (isset($options['fit'])) {
+            $allowedFits = ['scale', 'scaledown', 'cover', 'contain', 'crop'];
+            abort_unless(in_array(strtolower($options['fit']), $allowedFits), 400, 'Invalid fit mode');
         }
     }
 

@@ -12,7 +12,7 @@ return [
 
     'route' => [
         'enabled' => true,
-        'prefix' => 'img',
+        'prefix' => 'img', // Set to null or '' to serve from root
         'middleware' => ['web'],
         'name' => 'image-proxy.show',
     ],
@@ -39,17 +39,18 @@ return [
     |--------------------------------------------------------------------------
     |
     | Define the image sources that the proxy can serve from. Each source
-    | has a prefix that maps to a resolver callback or disk name.
+    | maps a URL prefix to a filesystem disk name.
     |
-    | Built-in resolvers:
-    | - 'public' => Serves from public_path()
-    | - 'storage:diskname' => Serves from a storage disk
+    | Examples:
+    | - '' => 'public'     (default, serves from 'public' disk)
+    | - 'r2' => 'r2'       (/img/w=800/r2/path serves from 'r2' disk)
+    | - 'media' => 's3'    (/img/w=800/media/path serves from 's3' disk)
     |
     */
 
     'sources' => [
         '' => 'public',
-        // 'r2' => 'storage:data',
+        // 'r2' => 'r2',
     ],
 
     /*
@@ -60,7 +61,7 @@ return [
     | Optional callback to validate paths before serving. Return false to
     | reject the request with a 403 response.
     |
-    | Example: fn(string $source, string $path) => !str_contains($path, '..')
+    | Example: fn(string $disk, string $path) => !str_contains($path, '..')
     |
     */
 
