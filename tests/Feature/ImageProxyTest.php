@@ -21,7 +21,7 @@ afterEach(function () {
 });
 
 it('resizes an image with width option', function () {
-    $response = $this->get('/img/width=100/p/test-image.jpg');
+    $response = $this->get('/width=100/p/test-image.jpg');
 
     $response->assertStatus(200);
     $response->assertHeader('Content-Type', 'image/jpeg');
@@ -33,50 +33,50 @@ it('resizes an image with width option', function () {
 });
 
 it('converts an image to webp format', function () {
-    $response = $this->get('/img/format=webp/p/test-image.jpg');
+    $response = $this->get('/format=webp/p/test-image.jpg');
 
     $response->assertStatus(200);
     $response->assertHeader('Content-Type', 'image/webp');
 });
 
 it('returns 404 for non-existent image', function () {
-    $response = $this->get('/img/width=100/p/non-existent.jpg');
+    $response = $this->get('/width=100/p/non-existent.jpg');
 
     $response->assertStatus(404);
 });
 
 it('returns 404 for unknown source', function () {
-    $response = $this->get('/img/width=100/unknown/test-image.jpg');
+    $response = $this->get('/width=100/unknown/test-image.jpg');
 
     $response->assertStatus(404);
 });
 
 it('prevents directory traversal attacks', function () {
-    $response = $this->get('/img/width=100/p/../../../etc/passwd.jpg');
+    $response = $this->get('/width=100/p/../../../etc/passwd.jpg');
 
     $response->assertStatus(403);
 });
 
 it('validates quality option range', function () {
-    $response = $this->get('/img/quality=150/p/test-image.jpg');
+    $response = $this->get('/quality=150/p/test-image.jpg');
 
     $response->assertStatus(400);
 });
 
 it('accepts valid quality option', function () {
-    $response = $this->get('/img/q=80/p/test-image.jpg');
+    $response = $this->get('/q=80/p/test-image.jpg');
 
     $response->assertStatus(200);
 
     // Verify it's a valid image and quality affects file size
-    $lowQuality = $this->get('/img/q=10/p/test-image.jpg');
-    $highQuality = $this->get('/img/q=100/p/test-image.jpg');
+    $lowQuality = $this->get('/q=10/p/test-image.jpg');
+    $highQuality = $this->get('/q=100/p/test-image.jpg');
 
     expect(strlen($lowQuality->getContent()))->toBeLessThan(strlen($highQuality->getContent()));
 });
 
 it('supports multiple options', function () {
-    $response = $this->get('/img/w=50,h=25,fit=cover,q=80/p/test-image.jpg');
+    $response = $this->get('/w=50,h=25,fit=cover,q=80/p/test-image.jpg');
 
     $response->assertStatus(200);
 
@@ -86,7 +86,7 @@ it('supports multiple options', function () {
 });
 
 it('supports option aliases', function () {
-    $response = $this->get('/img/w=100,h=50,f=webp/p/test-image.jpg');
+    $response = $this->get('/w=100,h=50,f=webp/p/test-image.jpg');
 
     $response->assertStatus(200);
     $response->assertHeader('Content-Type', 'image/webp');
@@ -98,7 +98,7 @@ it('supports option aliases', function () {
 
 it('supports fit=cover mode', function () {
     // cover crops to fill exact dimensions
-    $response = $this->get('/img/w=50,h=50,fit=cover/p/test-image.jpg');
+    $response = $this->get('/w=50,h=50,fit=cover/p/test-image.jpg');
 
     $response->assertStatus(200);
 
@@ -109,7 +109,7 @@ it('supports fit=cover mode', function () {
 
 it('supports fit=contain mode', function () {
     // contain fits inside dimensions with padding
-    $response = $this->get('/img/w=100,h=100,fit=contain/p/test-image.jpg');
+    $response = $this->get('/w=100,h=100,fit=contain/p/test-image.jpg');
 
     $response->assertStatus(200);
 
@@ -120,7 +120,7 @@ it('supports fit=contain mode', function () {
 
 it('supports fit=scale mode', function () {
     // scale maintains aspect ratio
-    $response = $this->get('/img/w=100,h=100,fit=scale/p/test-image.jpg');
+    $response = $this->get('/w=100,h=100,fit=scale/p/test-image.jpg');
 
     $response->assertStatus(200);
 
@@ -131,7 +131,7 @@ it('supports fit=scale mode', function () {
 
 it('supports fit=crop mode', function () {
     // crop extracts exact dimensions from center
-    $response = $this->get('/img/w=50,h=50,fit=crop/p/test-image.jpg');
+    $response = $this->get('/w=50,h=50,fit=crop/p/test-image.jpg');
 
     $response->assertStatus(200);
 
@@ -142,7 +142,7 @@ it('supports fit=crop mode', function () {
 
 it('supports fit=scaledown mode', function () {
     // scaledown only shrinks, never enlarges
-    $response = $this->get('/img/w=100,fit=scaledown/p/test-image.jpg');
+    $response = $this->get('/w=100,fit=scaledown/p/test-image.jpg');
 
     $response->assertStatus(200);
 
@@ -152,19 +152,19 @@ it('supports fit=scaledown mode', function () {
 });
 
 it('rejects invalid fit mode', function () {
-    $response = $this->get('/img/w=50,fit=invalid/p/test-image.jpg');
+    $response = $this->get('/w=50,fit=invalid/p/test-image.jpg');
 
     $response->assertStatus(400);
 });
 
 it('rejects dimensions exceeding max', function () {
-    $response = $this->get('/img/w=5000/p/test-image.jpg');
+    $response = $this->get('/w=5000/p/test-image.jpg');
 
     $response->assertStatus(400);
 });
 
 it('allows v option as cache buster', function () {
-    $response = $this->get('/img/w=100,v=2/p/test-image.jpg');
+    $response = $this->get('/w=100,v=2/p/test-image.jpg');
 
     $response->assertStatus(200);
 

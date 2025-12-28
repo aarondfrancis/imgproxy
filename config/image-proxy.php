@@ -19,7 +19,7 @@ return [
 
     'route' => [
         'enabled' => true,
-        'prefix' => 'img',
+        'prefix' => null,
         'middleware' => [],
         'name' => 'image-proxy.show',
     ],

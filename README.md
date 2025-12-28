@@ -4,10 +4,10 @@ On-the-fly image resizing and format conversion for Laravel. Transform images vi
 
 ```html
 <!-- Original 4000x3000 image -->
-<img src="/img/w=800,f=webp/p/photos/hero.jpg">
+<img src="/w=800,f=webp/p/photos/hero.jpg">
 
 <!-- Thumbnail with exact dimensions -->
-<img src="/img/w=150,h=150,fit=cover/p/photos/avatar.jpg">
+<img src="/w=150,h=150,fit=cover/p/photos/avatar.jpg">
 ```
 
 Upload once, serve any size. Let Cloudflare (or any CDN) cache the results at the edge.
@@ -29,7 +29,7 @@ php artisan vendor:publish --tag=image-proxy-config
 The package automatically registers a route for image proxying:
 
 ```
-/img/{options}/{path}
+/{options}/{path}
 ```
 
 ### Options
@@ -61,10 +61,10 @@ Use the `v` option to bust browser and CDN caches when an image changes. The val
 
 ```html
 <!-- Original -->
-<img src="/img/w=400/p/photos/hero.jpg">
+<img src="/w=400/p/photos/hero.jpg">
 
 <!-- After updating the image, change v to bust caches -->
-<img src="/img/w=400,v=2/p/photos/hero.jpg">
+<img src="/w=400,v=2/p/photos/hero.jpg">
 ```
 
 Since the URL changes, browsers and CDNs will fetch the new version. Increment `v` each time the source image is updated.
@@ -73,16 +73,16 @@ Since the URL changes, browsers and CDNs will fetch the new version. Increment `
 
 ```html
 <!-- Resize to 400px width -->
-<img src="/img/w=400/p/images/photo.jpg">
+<img src="/w=400/p/images/photo.jpg">
 
 <!-- Resize and convert to WebP -->
-<img src="/img/w=400,f=webp/p/images/photo.jpg">
+<img src="/w=400,f=webp/p/images/photo.jpg">
 
 <!-- Cover crop to exact dimensions -->
-<img src="/img/w=800,h=600,fit=cover/p/images/photo.jpg">
+<img src="/w=800,h=600,fit=cover/p/images/photo.jpg">
 
 <!-- Multiple options -->
-<img src="/img/w=800,h=600,q=85,f=webp/p/images/photo.jpg">
+<img src="/w=800,h=600,q=85,f=webp/p/images/photo.jpg">
 ```
 
 ## Configuration
@@ -93,9 +93,9 @@ Configure image sources in `config/image-proxy.php`. Each source maps a URL pref
 
 ```php
 'sources' => [
-    'p' => 'public',    // /img/w=800/p/path serves from 'public' disk
-    'r2' => 'r2',       // /img/w=800/r2/path serves from 'r2' disk
-    'media' => 's3',    // /img/w=800/media/path serves from 's3' disk
+    'p' => 'public',    // /w=800/p/path serves from 'public' disk
+    'r2' => 'r2',       // /w=800/r2/path serves from 'r2' disk
+    'media' => 's3',    // /w=800/media/path serves from 's3' disk
 ],
 ```
 
@@ -103,10 +103,10 @@ Usage:
 
 ```html
 <!-- Serves from 'public' disk -->
-<img src="/img/w=400/p/images/photo.jpg">
+<img src="/w=400/p/images/photo.jpg">
 
 <!-- Serves from 'r2' disk -->
-<img src="/img/w=400/r2/images/photo.jpg">
+<img src="/w=400/r2/images/photo.jpg">
 ```
 
 Requests with an unknown source prefix return 404.
@@ -193,7 +193,7 @@ Customize the route prefix, middleware, and name:
 ```php
 'route' => [
     'enabled' => true,
-    'prefix' => 'img',           // /img/{options}/{path}
+    'prefix' => null,            // /{options}/{path}
     'middleware' => [],
     'name' => 'image-proxy.show',
 ],
@@ -201,10 +201,10 @@ Customize the route prefix, middleware, and name:
 
 Avoid middleware that starts sessions or sets cookies—these prevent CDN caching.
 
-Set `prefix` to `null` or `''` to serve from the root:
+Set a prefix if you prefer URLs like `/img/{options}/{path}`:
 
 ```php
-'prefix' => null,  // /{options}/{path}
+'prefix' => 'img',
 ```
 
 ### Custom Route
