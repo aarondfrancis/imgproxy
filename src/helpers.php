@@ -11,7 +11,7 @@ if (! function_exists('imgproxy')) {
      *
      * @param  string  $source  The configured source identifier
      * @param  string  $path  Path to the image within the source
-     * @return UrlBuilder  Fluent builder for constructing the URL
+     * @return UrlBuilder Fluent builder for constructing the URL
      */
     function imgproxy(string $source, string $path): UrlBuilder
     {

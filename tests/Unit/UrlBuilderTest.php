@@ -1,7 +1,5 @@
 <?php
 
-use AaronFrancis\ImgProxy\UrlBuilder;
-
 it('builds a basic url', function () {
     $url = imgproxy('images', 'photo.jpg');
 

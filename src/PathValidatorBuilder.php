@@ -25,7 +25,7 @@ class PathValidatorBuilder implements PathValidatorContract
      * the path must satisfy at least one item from each category.
      *
      * @param  string  $path  The path to validate
-     * @return bool  True if path passes all constraints
+     * @return bool True if path passes all constraints
      */
     public function validate(string $path): bool
     {
@@ -72,7 +72,7 @@ class PathValidatorBuilder implements PathValidatorContract
     protected function matchesDirectories(string $path): bool
     {
         foreach ($this->directories as $dir) {
-            $dir = rtrim($dir, '/') . '/';
+            $dir = rtrim($dir, '/').'/';
             if (str_starts_with($path, $dir)) {
                 return true;
             }
@@ -110,7 +110,7 @@ class PathValidatorBuilder implements PathValidatorContract
      *
      * @param  string  $path  The path to check
      * @param  string  $pattern  The glob pattern
-     * @return bool  True if the path matches the pattern
+     * @return bool True if the path matches the pattern
      */
     protected function matchesPattern(string $path, string $pattern): bool
     {
@@ -128,6 +128,6 @@ class PathValidatorBuilder implements PathValidatorContract
         // ? matches single character
         $regex = str_replace('\\?', '.', $regex);
 
-        return (bool) preg_match('#^' . $regex . '$#', $path);
+        return (bool) preg_match('#^'.$regex.'$#', $path);
     }
 }

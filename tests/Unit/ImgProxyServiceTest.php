@@ -173,7 +173,8 @@ it('uses public as default disk when not specified', function () {
 // validatePath() tests with PathValidatorContract
 
 it('validates path with PathValidatorContract implementation', function () {
-    $validator = new class implements PathValidatorContract {
+    $validator = new class implements PathValidatorContract
+    {
         public function validate(string $path): bool
         {
             return str_starts_with($path, 'allowed/');
@@ -194,7 +195,8 @@ it('validates path with PathValidatorContract implementation', function () {
 });
 
 it('rejects path when PathValidatorContract returns false', function () {
-    $validator = new class implements PathValidatorContract {
+    $validator = new class implements PathValidatorContract
+    {
         public function validate(string $path): bool
         {
             return str_starts_with($path, 'allowed/');
@@ -213,7 +215,8 @@ it('rejects path when PathValidatorContract returns false', function () {
 })->throws(HttpException::class, 'Path not allowed');
 
 it('resolves string validator from container', function () {
-    $validator = new class implements PathValidatorContract {
+    $validator = new class implements PathValidatorContract
+    {
         public function validate(string $path): bool
         {
             return true;
@@ -236,7 +239,8 @@ it('resolves string validator from container', function () {
 });
 
 it('resolves class name validator from container', function () {
-    $validatorClass = new class implements PathValidatorContract {
+    $validatorClass = new class implements PathValidatorContract
+    {
         public static bool $validated = false;
 
         public function validate(string $path): bool

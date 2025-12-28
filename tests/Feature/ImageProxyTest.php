@@ -199,12 +199,14 @@ it('passes full path including root to validator', function () {
     $receivedPath = null;
 
     // Create a validator that captures the path it receives
-    $validator = new class implements \AaronFrancis\ImgProxy\Contracts\PathValidatorContract {
+    $validator = new class implements \AaronFrancis\ImgProxy\Contracts\PathValidatorContract
+    {
         public static ?string $receivedPath = null;
 
         public function validate(string $path): bool
         {
             self::$receivedPath = $path;
+
             return true;
         }
     };

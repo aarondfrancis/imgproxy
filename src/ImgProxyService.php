@@ -32,7 +32,7 @@ class ImgProxyService
 
         // Prepend root if configured
         if ($config['root']) {
-            $path = Str::start($path, rtrim($config['root'], '/') . '/');
+            $path = Str::start($path, rtrim($config['root'], '/').'/');
         }
 
         // Validate the full path (user validator sees the complete path including root)
@@ -73,7 +73,6 @@ class ImgProxyService
      *
      * @param  string  $fullPath  The full path including any configured root
      * @param  array  $config  The normalized source configuration
-     * @return void
      *
      * @throws \Symfony\Component\HttpKernel\Exception\HttpException
      */
@@ -101,7 +100,7 @@ class ImgProxyService
      *
      * @param  string  $disk  The filesystem disk name
      * @param  string  $path  The path to the image file
-     * @return string  The raw image data
+     * @return string The raw image data
      *
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      */

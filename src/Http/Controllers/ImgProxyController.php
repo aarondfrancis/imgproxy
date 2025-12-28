@@ -30,12 +30,12 @@ class ImgProxyController extends Controller
      * @param  string  $options  Comma-separated transformation options (e.g., "w=300,h=200,f=webp")
      * @param  string  $source  The configured source identifier
      * @param  string  $path  Path to the image within the source
-     * @return Response  The processed image with appropriate headers
+     * @return Response The processed image with appropriate headers
      */
     public function show(Request $request, string $options, string $source, string $path): Response
     {
         if ($this->shouldRateLimit()) {
-            $this->rateLimit($request, $source . '/' . $path);
+            $this->rateLimit($request, $source.'/'.$path);
         }
 
         $resolved = $this->service->resolve($source, $path);
@@ -88,7 +88,7 @@ class ImgProxyController extends Controller
         $maxAttempts = config('imgproxy.rate_limit.max_attempts', 10);
 
         $allowed = RateLimiter::attempt(
-            key: 'imgproxy::' . $request->ip() . ':' . $path,
+            key: 'imgproxy::'.$request->ip().':'.$path,
             maxAttempts: $maxAttempts,
             callback: fn () => true
         );
@@ -104,7 +104,7 @@ class ImgProxyController extends Controller
      * Supports aliases: w=width, h=height, q=quality, f=format.
      *
      * @param  string  $options  Comma-separated key=value pairs
-     * @return array<string, string|null>  Parsed options with aliases resolved
+     * @return array<string, string|null> Parsed options with aliases resolved
      */
     protected function parseOptions(string $options): array
     {
@@ -131,9 +131,8 @@ class ImgProxyController extends Controller
      * Validate transformation options against configured limits.
      *
      * @param  array<string, mixed>  $options  Parsed options to validate
-     * @return void
      *
-     * @throws \Symfony\Component\HttpKernel\Exception\HttpException  If validation fails
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException If validation fails
      */
     protected function validateOptions(array $options): void
     {
@@ -169,7 +168,7 @@ class ImgProxyController extends Controller
     /**
      * Build the Cache-Control header value from config.
      *
-     * @return string  Cache-Control header value
+     * @return string Cache-Control header value
      */
     protected function buildCacheControl(): string
     {
@@ -179,19 +178,19 @@ class ImgProxyController extends Controller
         $parts[] = 'public';
 
         if ($maxAge = Arr::get($config, 'max_age', 2592000)) {
-            $parts[] = 'max-age=' . $maxAge;
+            $parts[] = 'max-age='.$maxAge;
         }
 
         if ($sMaxAge = Arr::get($config, 's_maxage', 2592000)) {
-            $parts[] = 's-maxage=' . $sMaxAge;
+            $parts[] = 's-maxage='.$sMaxAge;
         }
 
         if ($staleWhileRevalidate = Arr::get($config, 'stale_while_revalidate')) {
-            $parts[] = 'stale-while-revalidate=' . $staleWhileRevalidate;
+            $parts[] = 'stale-while-revalidate='.$staleWhileRevalidate;
         }
 
         if ($staleIfError = Arr::get($config, 'stale_if_error')) {
-            $parts[] = 'stale-if-error=' . $staleIfError;
+            $parts[] = 'stale-if-error='.$staleIfError;
         }
 
         if (Arr::get($config, 'immutable', true)) {

@@ -10,7 +10,7 @@ class ImgProxyServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/imgproxy.php', 'imgproxy');
+        $this->mergeConfigFrom(__DIR__.'/../config/imgproxy.php', 'imgproxy');
 
         $this->app->singleton(ImgProxyService::class);
     }
@@ -18,7 +18,7 @@ class ImgProxyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/../config/imgproxy.php' => config_path('imgproxy.php'),
+            __DIR__.'/../config/imgproxy.php' => config_path('imgproxy.php'),
         ], 'imgproxy-config');
 
         if (config('imgproxy.route.enabled', true)) {
@@ -38,7 +38,7 @@ class ImgProxyServiceProvider extends ServiceProvider
 
                 $uri = $prefix
                     ? "{$prefix}/{options}/{source}/{path}"
-                    : "{options}/{source}/{path}";
+                    : '{options}/{source}/{path}';
 
                 Route::get($uri, [ImgProxyController::class, 'show'])
                     ->where('options', '([a-zA-Z]+=[a-zA-Z0-9]+,?)+')

@@ -11,13 +11,18 @@ use Stringable;
  * Provides a chainable API for setting image transformation options
  * and generates properly formatted URLs for the image proxy endpoint.
  */
-class UrlBuilder implements Stringable, Htmlable
+class UrlBuilder implements Htmlable, Stringable
 {
     protected ?int $width = null;
+
     protected ?int $height = null;
+
     protected ?string $format = null;
+
     protected ?int $quality = null;
+
     protected ?string $fit = null;
+
     protected ?string $version = null;
 
     public function __construct(
@@ -29,7 +34,6 @@ class UrlBuilder implements Stringable, Htmlable
      * Set the target width in pixels.
      *
      * @param  int  $width  Width in pixels
-     * @return static
      */
     public function width(int $width): static
     {
@@ -47,7 +51,6 @@ class UrlBuilder implements Stringable, Htmlable
      * Set the target height in pixels.
      *
      * @param  int  $height  Height in pixels
-     * @return static
      */
     public function height(int $height): static
     {
@@ -65,7 +68,6 @@ class UrlBuilder implements Stringable, Htmlable
      * Set the output format.
      *
      * @param  string  $format  Output format (jpg, png, gif, webp)
-     * @return static
      */
     public function format(string $format): static
     {
@@ -103,7 +105,6 @@ class UrlBuilder implements Stringable, Htmlable
      * Set the output quality for lossy formats.
      *
      * @param  int  $quality  Quality from 1-100
-     * @return static
      */
     public function quality(int $quality): static
     {
@@ -121,7 +122,6 @@ class UrlBuilder implements Stringable, Htmlable
      * Set the resize fit mode.
      *
      * @param  string  $fit  Fit mode (scale, scaledown, cover, contain, crop)
-     * @return static
      */
     public function fit(string $fit): static
     {
@@ -170,7 +170,7 @@ class UrlBuilder implements Stringable, Htmlable
     /**
      * Get the generated URL string.
      *
-     * @return string  The complete image proxy URL
+     * @return string The complete image proxy URL
      */
     public function url(): string
     {
@@ -185,12 +185,12 @@ class UrlBuilder implements Stringable, Htmlable
     /**
      * Convert the builder to a URL string.
      *
-     * @return string  The complete image proxy URL
+     * @return string The complete image proxy URL
      */
     public function __toString(): string
     {
         $options = $this->buildOptions();
-        $prefix = config('imgproxy.route.prefix');
+        $prefix = config('imgproxy.route.prefix', null);
 
         $parts = array_filter([
             $prefix,
@@ -199,7 +199,7 @@ class UrlBuilder implements Stringable, Htmlable
             ltrim($this->path, '/'),
         ]);
 
-        return '/' . implode('/', $parts);
+        return '/'.implode('/', $parts);
     }
 
     protected function buildOptions(): string
@@ -207,27 +207,27 @@ class UrlBuilder implements Stringable, Htmlable
         $options = [];
 
         if ($this->width !== null) {
-            $options[] = 'w=' . $this->width;
+            $options[] = 'w='.$this->width;
         }
 
         if ($this->height !== null) {
-            $options[] = 'h=' . $this->height;
+            $options[] = 'h='.$this->height;
         }
 
         if ($this->fit !== null) {
-            $options[] = 'fit=' . $this->fit;
+            $options[] = 'fit='.$this->fit;
         }
 
         if ($this->quality !== null) {
-            $options[] = 'q=' . $this->quality;
+            $options[] = 'q='.$this->quality;
         }
 
         if ($this->format !== null) {
-            $options[] = 'f=' . $this->format;
+            $options[] = 'f='.$this->format;
         }
 
         if ($this->version !== null) {
-            $options[] = 'v=' . $this->version;
+            $options[] = 'v='.$this->version;
         }
 
         return implode(',', $options);
