@@ -184,7 +184,7 @@ Limits requests per IP per image path (prevents abuse by requesting many resize 
 ],
 ```
 
-Most images should be cached by your CDN, so legitimate users will rarely hit your origin server for the same image twice. This limit is a safety net against bad actors.
+Most images should be cached by your CDN, so legitimate users will rarely hit your origin server at all. This limit is a safety net against bad actors.
 
 ### Route Configuration
 
