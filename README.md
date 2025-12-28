@@ -194,10 +194,12 @@ Customize the route prefix, middleware, and name:
 'route' => [
     'enabled' => true,
     'prefix' => 'img',           // /img/{options}/{path}
-    'middleware' => ['web'],
+    'middleware' => [],
     'name' => 'image-proxy.show',
 ],
 ```
+
+Avoid middleware that starts sessions or sets cookies—these prevent CDN caching.
 
 Set `prefix` to `null` or `''` to serve from the root:
 

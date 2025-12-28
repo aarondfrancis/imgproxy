@@ -12,12 +12,15 @@ return [
     | if you prefer to register your own. Set prefix to null to serve images
     | from the root URL (e.g., /{options}/{path}).
     |
+    | Avoid middleware that starts sessions or sets cookies—these prevent
+    | CDN caching and add unnecessary overhead for image requests.
+    |
     */
 
     'route' => [
         'enabled' => true,
         'prefix' => 'img',
-        'middleware' => ['web'],
+        'middleware' => [],
         'name' => 'image-proxy.show',
     ],
 
