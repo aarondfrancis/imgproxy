@@ -111,14 +111,15 @@ class ImageProxyController extends Controller
 
     protected function validatePath(string $disk, string $path): void
     {
-        $validator = config('image-proxy.path_validator');
-
-        if ($validator && is_callable($validator)) {
-            abort_unless($validator($disk, $path), 403);
-        }
-
         // Always prevent directory traversal
         abort_if(str_contains($path, '..'), 403);
+
+        $validator = config('image-proxy.path_validator');
+
+        if ($validator) {
+            $validator = is_string($validator) ? app($validator) : $validator;
+            abort_unless($validator($disk, $path), 403);
+        }
     }
 
     protected function loadImage(string $disk, string $path): string

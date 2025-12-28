@@ -1,29 +1,70 @@
 <?php
 
 return [
+
     /*
     |--------------------------------------------------------------------------
     | Route Configuration
     |--------------------------------------------------------------------------
     |
-    | Configure the route prefix and middleware for the image proxy endpoint.
+    | Here you may configure the route that serves proxied images. You can
+    | change the URL prefix, apply middleware, or disable the route entirely
+    | if you prefer to register your own. Set prefix to null to serve images
+    | from the root URL (e.g., /{options}/{path}).
     |
     */
 
     'route' => [
         'enabled' => true,
-        'prefix' => 'img', // Set to null or '' to serve from root
+        'prefix' => 'img',
         'middleware' => ['web'],
         'name' => 'image-proxy.show',
     ],
 
     /*
     |--------------------------------------------------------------------------
+    | Image Sources
+    |--------------------------------------------------------------------------
+    |
+    | Define the filesystem disks that the proxy can serve images from. Each
+    | entry maps a URL prefix to a Laravel filesystem disk. The empty string
+    | key defines the default disk used when no prefix matches.
+    |
+    | For example, with 'r2' => 'r2', a request to /img/w=800/r2/photos/1.jpg
+    | will serve photos/1.jpg from the 'r2' disk.
+    |
+    */
+
+    'sources' => [
+        '' => 'public',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Path Validation
+    |--------------------------------------------------------------------------
+    |
+    | You may provide an optional validator to restrict which paths can be
+    | served. Use the built-in PathValidator helpers or your own invokable
+    | class. Directory traversal attacks (../) are always blocked.
+    |
+    | Examples:
+    |   PathValidator::directories('images', 'uploads')
+    |   PathValidator::matches('images/**\/*.jpg', 'photos/*.png')
+    |
+    */
+
+    'path_validator' => null,
+
+    /*
+    |--------------------------------------------------------------------------
     | Rate Limiting
     |--------------------------------------------------------------------------
     |
-    | Enable rate limiting to prevent abuse. When enabled, each unique
-    | IP + path combination is limited to the specified number of requests.
+    | To prevent abuse, you may enable rate limiting on image requests. When
+    | enabled, each unique combination of IP address and image path is limited
+    | to the specified number of requests. Rate limiting only applies in the
+    | production environment.
     |
     */
 
@@ -35,45 +76,12 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Sources
-    |--------------------------------------------------------------------------
-    |
-    | Define the image sources that the proxy can serve from. Each source
-    | maps a URL prefix to a filesystem disk name.
-    |
-    | Examples:
-    | - '' => 'public'     (default, serves from 'public' disk)
-    | - 'r2' => 'r2'       (/img/w=800/r2/path serves from 'r2' disk)
-    | - 'media' => 's3'    (/img/w=800/media/path serves from 's3' disk)
-    |
-    */
-
-    'sources' => [
-        '' => 'public',
-        // 'r2' => 'r2',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Path Validation
-    |--------------------------------------------------------------------------
-    |
-    | Optional callback to validate paths before serving. Return false to
-    | reject the request with a 403 response.
-    |
-    | Example: fn(string $disk, string $path) => !str_contains($path, '..')
-    |
-    */
-
-    'path_validator' => null,
-
-    /*
-    |--------------------------------------------------------------------------
     | Default Quality
     |--------------------------------------------------------------------------
     |
-    | The default quality for JPEG and WebP encoding when not specified
-    | in the URL options.
+    | When encoding JPEG or WebP images, this quality setting will be used
+    | if no quality option is specified in the URL. Quality can be set per
+    | request using the q= or quality= option (1-100).
     |
     */
 
@@ -84,12 +92,14 @@ return [
     | Cache Headers
     |--------------------------------------------------------------------------
     |
-    | Configure the cache headers sent with image responses.
+    | Configure the Cache-Control headers sent with image responses. These
+    | headers control how long browsers and CDNs cache the processed images.
+    | The default values cache images for 30 days with immutable flag.
     |
     */
 
     'cache' => [
-        'max_age' => 2592000, // 30 days
+        'max_age' => 2592000,
         's_maxage' => 2592000,
         'immutable' => true,
     ],
@@ -99,22 +109,28 @@ return [
     | Allowed Dimensions
     |--------------------------------------------------------------------------
     |
-    | Optionally restrict the allowed width/height values. Set to null to
-    | allow any dimensions. Use an array of allowed values for whitelist.
+    | To prevent cache-busting attacks with arbitrary dimensions, you may
+    | restrict the allowed width and height values to a whitelist. Set to
+    | null to allow any dimensions, or provide an array of allowed values.
+    |
+    | Example: [100, 200, 400, 800, 1200, 1600]
     |
     */
 
-    'allowed_widths' => null,  // e.g., [100, 200, 400, 800, 1200]
-    'allowed_heights' => null, // e.g., [100, 200, 400, 800]
+    'allowed_widths' => null,
+    'allowed_heights' => null,
 
     /*
     |--------------------------------------------------------------------------
     | Allowed Formats
     |--------------------------------------------------------------------------
     |
-    | The output formats that can be requested via the format option.
+    | Define which output formats can be requested via the f= or format=
+    | option. Requests for formats not in this list will be rejected with
+    | a 400 response.
     |
     */
 
     'allowed_formats' => ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+
 ];

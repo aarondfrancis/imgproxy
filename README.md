@@ -101,13 +101,27 @@ Usage with source prefix:
 
 ### Path Validation
 
-Add custom path validation:
+Restrict which paths can be served using the built-in validators:
 
 ```php
-'path_validator' => function (string $disk, string $path) {
-    // Only allow paths starting with 'images/'
-    return str_starts_with($path, 'images/');
-},
+use TryHard\ImageProxy\PathValidator;
+
+// Only allow paths in specific directories
+'path_validator' => PathValidator::directories('images', 'uploads'),
+
+// Only allow paths matching glob patterns
+'path_validator' => PathValidator::matches('images/**/*.jpg', 'photos/*.png'),
+```
+
+Pattern syntax:
+- `*` matches any characters except `/`
+- `**` matches any characters including `/`
+- `?` matches a single character
+
+For custom validation, use an invokable class:
+
+```php
+'path_validator' => App\ImageProxy\MyValidator::class,
 ```
 
 ### Restrict Dimensions
