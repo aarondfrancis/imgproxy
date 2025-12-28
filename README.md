@@ -1,5 +1,10 @@
 # ImgProxy for Laravel
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/aaronfrancis/imgproxy.svg?style=flat-square)](https://packagist.org/packages/aaronfrancis/imgproxy)
+[![Total Downloads](https://img.shields.io/packagist/dt/aaronfrancis/imgproxy.svg?style=flat-square)](https://packagist.org/packages/aaronfrancis/imgproxy)
+[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/aarondfrancis/image-proxy/ci.yaml?branch=main&label=tests&style=flat-square)](https://github.com/aarondfrancis/image-proxy/actions?query=workflow%3ACI+branch%3Amain)
+[![License](https://img.shields.io/packagist/l/aaronfrancis/imgproxy.svg?style=flat-square)](https://packagist.org/packages/aaronfrancis/imgproxy)
+
 On-the-fly image resizing and format conversion for Laravel. Transform images via URL parameters—no pre-processing, no
 cache bloat, just simple URLs that your CDN can cache.
 
