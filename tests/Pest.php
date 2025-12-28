@@ -1,5 +1,5 @@
 <?php
 
-use TryHard\ImageProxy\Tests\TestCase;
+use AaronFrancis\ImgProxy\Tests\TestCase;
 
 uses(TestCase::class)->in(__DIR__);

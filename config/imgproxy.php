@@ -21,7 +21,7 @@ return [
         'enabled' => true,
         'prefix' => null,
         'middleware' => [],
-        'name' => 'image-proxy.show',
+        'name' => 'imgproxy.show',
     ],
 
     /*
@@ -30,34 +30,22 @@ return [
     |--------------------------------------------------------------------------
     |
     | Define the filesystem disks that the proxy can serve images from. Each
-    | entry maps a URL prefix to a Laravel filesystem disk. Every source must
-    | have an explicit prefix - empty prefixes are not allowed.
+    | source maps a URL prefix to a configuration array with:
     |
-    | For example, /img/w=800/p/photos/1.jpg serves photos/1.jpg from the
-    | 'public' disk, and /img/w=800/r2/photos/1.jpg from the 'r2' disk.
+    |   - disk: The Laravel filesystem disk name
+    |   - root: Optional subdirectory within the disk (validated automatically)
+    |   - validator: Optional PathValidator or custom validator class
+    |
+    | For example, /w=800/images/photo.jpg serves photo.jpg from the configured
+    | disk's root directory.
     |
     */
 
     'sources' => [
-        'p' => 'public',
+        'images' => [
+            'disk' => 'public',
+        ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Path Validation
-    |--------------------------------------------------------------------------
-    |
-    | You may provide an optional validator to restrict which paths can be
-    | served. Use the built-in PathValidator helpers or your own invokable
-    | class. Directory traversal attacks (../) are always blocked.
-    |
-    | Examples:
-    |   PathValidator::directories('images', 'uploads')
-    |   PathValidator::matches('images/**\/*.jpg', 'photos/*.png')
-    |
-    */
-
-    'path_validator' => null,
 
     /*
     |--------------------------------------------------------------------------
@@ -67,6 +55,9 @@ return [
     | Limit how many times a single IP can request the same image path per
     | minute. This prevents abuse from requesting many different resize
     | variations of the same image. Only applies in production.
+    |
+    | Most images should be cached by your CDN, so legitimate users will
+    | rarely hit your origin server at all. This is a safety net.
     |
     */
 
@@ -112,8 +103,7 @@ return [
     |
     | Hard caps on the maximum width and height that can be requested. This
     | prevents bad actors from requesting extremely large images to consume
-    | server resources. These limits apply regardless of allowed_widths or
-    | allowed_heights settings.
+    | server resources.
     |
     */
 

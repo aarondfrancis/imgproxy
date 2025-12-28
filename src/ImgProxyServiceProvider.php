@@ -1,43 +1,45 @@
 <?php
 
-namespace TryHard\ImageProxy;
+namespace AaronFrancis\ImgProxy;
 
+use AaronFrancis\ImgProxy\Http\Controllers\ImgProxyController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use TryHard\ImageProxy\Http\Controllers\ImageProxyController;
 
-class ImageProxyServiceProvider extends ServiceProvider
+class ImgProxyServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/image-proxy.php', 'image-proxy');
+        $this->mergeConfigFrom(__DIR__ . '/../config/imgproxy.php', 'imgproxy');
+
+        $this->app->singleton(ImgProxyService::class);
     }
 
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/../config/image-proxy.php' => config_path('image-proxy.php'),
-        ], 'image-proxy-config');
+            __DIR__ . '/../config/imgproxy.php' => config_path('imgproxy.php'),
+        ], 'imgproxy-config');
 
-        if (config('image-proxy.route.enabled', true)) {
+        if (config('imgproxy.route.enabled', true)) {
             $this->registerRoutes();
         }
     }
 
     protected function registerRoutes(): void
     {
-        $config = config('image-proxy.route', []);
+        $config = config('imgproxy.route', []);
 
-        Route::middleware($config['middleware'] ?? ['web'])
+        Route::middleware($config['middleware'] ?? [])
             ->group(function () use ($config) {
                 $prefix = $config['prefix'] ?? null;
-                $name = $config['name'] ?? 'image-proxy.show';
+                $name = $config['name'] ?? 'imgproxy.show';
 
                 $uri = $prefix
                     ? "{$prefix}/{options}/{path}"
                     : "{options}/{path}";
 
-                Route::get($uri, [ImageProxyController::class, 'show'])
+                Route::get($uri, [ImgProxyController::class, 'show'])
                     ->where('options', '([a-zA-Z]+=[a-zA-Z0-9]+,?)+')
                     ->where('path', '.*\.[a-zA-Z0-9]+')
                     ->name($name);

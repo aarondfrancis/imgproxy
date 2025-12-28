@@ -1,7 +1,8 @@
 <?php
 
-namespace TryHard\ImageProxy\Http\Controllers;
+namespace AaronFrancis\ImgProxy\Http\Controllers;
 
+use AaronFrancis\ImgProxy\ImgProxyService;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -10,29 +11,28 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Intervention\Image\Encoders\GifEncoder;
 use Intervention\Image\Encoders\JpegEncoder;
 use Intervention\Image\Encoders\PngEncoder;
 use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\Laravel\Facades\Image;
 
-class ImageProxyController extends Controller
+class ImgProxyController extends Controller
 {
+    public function __construct(
+        protected ImgProxyService $service
+    ) {}
+
     public function show(Request $request, string $options, string $path): Response
     {
         if ($this->shouldRateLimit()) {
             $this->rateLimit($request, $path);
         }
 
-        [$disk, $resolvedPath] = $this->resolveDisk($path);
+        $resolved = $this->service->resolve($path);
+        $imageData = $this->service->loadImage($resolved['disk'], $resolved['path']);
 
-        $this->validatePath($disk, $resolvedPath);
-
-        $imageData = $this->loadImage($disk, $resolvedPath);
-        $extension = pathinfo($resolvedPath, PATHINFO_EXTENSION);
-
+        $extension = pathinfo($resolved['path'], PATHINFO_EXTENSION);
         $image = Image::read($imageData);
         $parsedOptions = $this->parseOptions($options);
 
@@ -52,7 +52,7 @@ class ImageProxyController extends Controller
             };
         }
 
-        $quality = (int) Arr::get($parsedOptions, 'quality', config('image-proxy.default_quality', 85));
+        $quality = (int) Arr::get($parsedOptions, 'quality', config('imgproxy.default_quality', 85));
         $format = Arr::get($parsedOptions, 'format', $extension);
 
         $encoder = match (strtolower($format)) {
@@ -71,12 +71,12 @@ class ImageProxyController extends Controller
 
     protected function shouldRateLimit(): bool
     {
-        return App::isProduction() && config('image-proxy.rate_limit.enabled', true);
+        return App::isProduction() && config('imgproxy.rate_limit.enabled', true);
     }
 
     protected function rateLimit(Request $request, string $path): void
     {
-        $maxAttempts = config('image-proxy.rate_limit.max_attempts', 10);
+        $maxAttempts = config('imgproxy.rate_limit.max_attempts', 10);
 
         $allowed = RateLimiter::attempt(
             key: 'imgproxy::' . $request->ip() . ':' . $path,
@@ -84,51 +84,9 @@ class ImageProxyController extends Controller
             callback: fn () => true
         );
 
-        if (!$allowed) {
+        if (! $allowed) {
             throw new HttpResponseException(Redirect::to($path));
         }
-    }
-
-    protected function resolveDisk(string $path): array
-    {
-        $sources = config('image-proxy.sources', ['p' => 'public']);
-
-        foreach ($sources as $prefix => $disk) {
-            if ($prefix === '') {
-                continue;
-            }
-
-            if (Str::startsWith($path, $prefix . '/')) {
-                $resolvedPath = Str::after($path, $prefix . '/');
-
-                return [$disk, $resolvedPath];
-            }
-        }
-
-        abort(404, 'Unknown source');
-    }
-
-    protected function validatePath(string $disk, string $path): void
-    {
-        // Always block directory traversal
-        abort_if(str_contains($path, '..'), 403);
-
-        $validator = config('image-proxy.path_validator');
-
-        if ($validator) {
-            if (is_string($validator)) {
-                $validator = app($validator);
-            }
-
-            abort_unless($validator($disk, $path), 403);
-        }
-    }
-
-    protected function loadImage(string $disk, string $path): string
-    {
-        abort_unless(Storage::disk($disk)->exists($path), 404);
-
-        return Storage::disk($disk)->get($path);
     }
 
     protected function parseOptions(string $options): array
@@ -154,9 +112,9 @@ class ImageProxyController extends Controller
 
     protected function validateOptions(array $options): void
     {
-        $maxWidth = config('image-proxy.max_width', 2000);
-        $maxHeight = config('image-proxy.max_height', 2000);
-        $allowedFormats = config('image-proxy.allowed_formats', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+        $maxWidth = config('imgproxy.max_width', 2000);
+        $maxHeight = config('imgproxy.max_height', 2000);
+        $allowedFormats = config('imgproxy.allowed_formats', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
 
         if (isset($options['width'])) {
             $width = (int) $options['width'];
@@ -185,7 +143,7 @@ class ImageProxyController extends Controller
 
     protected function buildCacheControl(): string
     {
-        $config = config('image-proxy.cache', []);
+        $config = config('imgproxy.cache', []);
         $parts = [];
 
         $parts[] = 'public';

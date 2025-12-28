@@ -1,13 +1,14 @@
 # Image Proxy for Laravel
 
-On-the-fly image resizing and format conversion for Laravel. Transform images via URL parameters—no pre-processing, no storage bloat, just simple URLs that your CDN can cache.
+On-the-fly image resizing and format conversion for Laravel. Transform images via URL parameters—no pre-processing, no
+cache bloat, just simple URLs that your CDN can cache.
 
 ```html
 <!-- Original 4000x3000 image -->
-<img src="/w=800,f=webp/p/photos/hero.jpg">
+<img src="/w=800,f=webp/images/hero.jpg">
 
 <!-- Thumbnail with exact dimensions -->
-<img src="/w=150,h=150,fit=cover/p/photos/avatar.jpg">
+<img src="/w=150,h=150,fit=cover/images/avatar.jpg">
 ```
 
 Upload once, serve any size. Let Cloudflare (or any CDN) cache the results at the edge.
@@ -15,13 +16,13 @@ Upload once, serve any size. Let Cloudflare (or any CDN) cache the results at th
 ## Installation
 
 ```bash
-composer require tryhard/image-proxy
+composer require aaronfrancis/imgproxy
 ```
 
 Publish the config file:
 
 ```bash
-php artisan vendor:publish --tag=image-proxy-config
+php artisan vendor:publish --tag=imgproxy-config
 ```
 
 ## Usage
@@ -29,84 +30,101 @@ php artisan vendor:publish --tag=image-proxy-config
 The package automatically registers a route for image proxying:
 
 ```
-/{options}/{path}
+/{options}/{source}/{path}
 ```
 
 ### Options
 
 Options are comma-separated key=value pairs:
 
-| Option | Alias | Description | Example |
-|--------|-------|-------------|---------|
-| `width` | `w` | Target width in pixels | `w=400` |
-| `height` | `h` | Target height in pixels | `h=300` |
-| `fit` | | Resize mode (see below) | `fit=cover` |
-| `quality` | `q` | JPEG/WebP quality (1-100) | `q=80` |
-| `format` | `f` | Output format (jpg, png, gif, webp) | `f=webp` |
-| `v` | | Cache buster (ignored, see below) | `v=2` |
+| Option    | Alias | Description                         | Example     |
+|-----------|-------|-------------------------------------|-------------|
+| `width`   | `w`   | Target width in pixels              | `w=400`     |
+| `height`  | `h`   | Target height in pixels             | `h=300`     |
+| `fit`     |       | Resize mode (see below)             | `fit=cover` |
+| `quality` | `q`   | JPEG/WebP quality (1-100)           | `q=80`      |
+| `format`  | `f`   | Output format (jpg, png, gif, webp) | `f=webp`    |
+| `v`       |       | Cache buster (ignored, see below)   | `v=2`       |
 
 ### Fit Modes
 
-| Mode | Description |
-|------|-------------|
+| Mode        | Description                                             |
+|-------------|---------------------------------------------------------|
 | `scaledown` | Scale to fit within dimensions, never enlarge (default) |
-| `scale` | Scale to fit within dimensions, may enlarge |
-| `cover` | Crop to fill exact dimensions (center crop) |
-| `contain` | Fit inside dimensions with padding |
-| `crop` | Crop from center to exact dimensions |
+| `scale`     | Scale to fit within dimensions, may enlarge             |
+| `cover`     | Crop to fill exact dimensions (center crop)             |
+| `contain`   | Fit inside dimensions with padding                      |
+| `crop`      | Crop from center to exact dimensions                    |
 
 ### Cache Busting
 
-Use the `v` option to bust browser and CDN caches when an image changes. The value is ignored by the proxy but creates a unique URL:
+Use the `v` option to bust browser and CDN caches when an image changes. The value is ignored by the proxy but creates a
+unique URL:
 
 ```html
 <!-- Original -->
-<img src="/w=400/p/photos/hero.jpg">
+<img src="/w=400/images/hero.jpg">
 
 <!-- After updating the image, change v to bust caches -->
-<img src="/w=400,v=2/p/photos/hero.jpg">
+<img src="/w=400,v=2/images/hero.jpg">
 ```
 
-Since the URL changes, browsers and CDNs will fetch the new version. Increment `v` each time the source image is updated.
+Since the URL changes, browsers and CDNs will fetch the new version. Increment `v` each time the source image is
+updated.
 
 ### Examples
 
 ```html
 <!-- Resize to 400px width -->
-<img src="/w=400/p/images/photo.jpg">
+<img src="/w=400/images/photo.jpg">
 
 <!-- Resize and convert to WebP -->
-<img src="/w=400,f=webp/p/images/photo.jpg">
+<img src="/w=400,f=webp/images/photo.jpg">
 
 <!-- Cover crop to exact dimensions -->
-<img src="/w=800,h=600,fit=cover/p/images/photo.jpg">
+<img src="/w=800,h=600,fit=cover/images/photo.jpg">
 
 <!-- Multiple options -->
-<img src="/w=800,h=600,q=85,f=webp/p/images/photo.jpg">
+<img src="/w=800,h=600,q=85,f=webp/images/photo.jpg">
 ```
 
 ## Configuration
 
 ### Sources
 
-Configure image sources in `config/image-proxy.php`. Each source maps a URL prefix to a filesystem disk. Every source requires an explicit prefix:
+Configure image sources in `config/imgproxy.php`. Each source maps a URL prefix to a filesystem disk. Every source
+requires an explicit prefix:
 
 ```php
 'sources' => [
-    'p' => 'public',    // /w=800/p/path serves from 'public' disk
-    'r2' => 'r2',       // /w=800/r2/path serves from 'r2' disk
-    'media' => 's3',    // /w=800/media/path serves from 's3' disk
+    // /w=800/images/{path} serves from 'public' disk
+    'images' => [
+        // Use the public disk 
+        'disk' =>'public',
+        
+        // Starting in the /images directory
+        'root' =>'images', 
+        
+        // Only allow jpg and pngs
+        'validator' => PathValidator::extensions(['jpg', 'png'])
+    ],   
+    
+    // /w=800/r2/{path} serves from 'r2' disk
+    'r2' => [
+        'disk' => 'r2',
+        
+        // Only allow these two directories.  
+        'path_validator' => PathValidator::directories(['images', 'uploads'])
+    ],
+    
+    // /w=800/media/{path} serves from 's3' disk
+    'media' => [
+        'disk' =>'s3',
+        
+        // Use a custom validator
+        'path_validator' => App\Validators\S3PublicPathValidator::class
+    ],  
 ],
-```
-
-Usage:
-
-```html
-<!-- Serves from 'public' disk -->
-<img src="/w=400/p/images/photo.jpg">
-
-<!-- Serves from 'r2' disk -->
-<img src="/w=400/r2/images/photo.jpg">
 ```
 
 Requests with an unknown source prefix return 404.
@@ -116,24 +134,31 @@ Requests with an unknown source prefix return 404.
 Restrict which paths can be served using the built-in validators:
 
 ```php
-use TryHard\ImageProxy\PathValidator;
+use AaronFrancis\ImgProxy\PathValidator;
 
 // Only allow paths in specific directories
-'path_validator' => PathValidator::directories('images', 'uploads'),
+PathValidator::directories(['images', 'uploads'])
 
 // Only allow paths matching glob patterns
-'path_validator' => PathValidator::matches('images/**/*.jpg', 'photos/*.png'),
+PathValidator::matches(['images/**/*.jpg', 'photos/*.png'])
+
+// Only allow certain extensions
+PathValidator::extensions(['jpg', 'png'])
+
+// Combine them
+PathValidator::directories(['images','uploads'])->extensions(['jpg', 'png'])
 ```
 
-Pattern syntax:
+Using the `matches` validator, the follow syntax applies:
+
 - `*` matches any characters except `/`
 - `**` matches any characters including `/`
 - `?` matches a single character
 
-For custom validation, use an invokable class:
+For custom validation, use an invokable class that implements the `PathValidatorContract`:
 
 ```php
-'path_validator' => App\ImageProxy\MyValidator::class,
+'path_validator' => App\Validators\S3PublicPathValidator::class,
 ```
 
 ### Maximum Dimensions
@@ -175,7 +200,8 @@ Configure the cache headers sent with responses:
 
 ### Rate Limiting
 
-Limits requests per IP per image path (prevents abuse by requesting many resize variations). Enabled by default in production:
+Limits requests per IP per image path (prevents abuse by requesting many resize variations). Enabled by default in
+production:
 
 ```php
 'rate_limit' => [
@@ -184,7 +210,8 @@ Limits requests per IP per image path (prevents abuse by requesting many resize 
 ],
 ```
 
-Most images should be cached by your CDN, so legitimate users will rarely hit your origin server at all. This limit is a safety net against bad actors.
+Most images should be cached by your CDN, so legitimate users will rarely hit your origin server at all. This limit is a
+safety net against bad actors.
 
 ### Route Configuration
 
@@ -212,31 +239,36 @@ Set a prefix if you prefer URLs like `/img/{options}/{path}`:
 Disable the default route and register your own:
 
 ```php
-// config/image-proxy.php
+// config/imgproxy.php
 'route' => [
     'enabled' => false,
 ],
 
 // routes/web.php
-use TryHard\ImageProxy\Http\Controllers\ImageProxyController;
+use AaronFrancis\ImgProxy\Http\Controllers\ImgProxyController;
 
-Route::get('images/{options}/{path}', [ImageProxyController::class, 'show'])
+Route::get('images/{options}/{path}', [ImgProxyController::class, 'show'])
     ->where('options', '([a-zA-Z]+=[a-zA-Z0-9]+,?)+')
     ->where('path', '.*\.[a-zA-Z0-9]+')
-    ->name('image-proxy.show');
+    ->name('imgproxy.show');
 ```
 
 ## Why No Server-Side Cache?
 
 This package intentionally does not cache processed images on the server. Here's why:
 
-1. **Storage bloat**: Every combination of image + options creates a new file. A single image with 10 width variations, 3 formats, and 5 quality levels = 150 cached files. Multiply by thousands of images and your storage explodes.
+1. **Storage bloat**: Every combination of image + options creates a new file. A single image with 10 width variations,
+   3 formats, and 5 quality levels = 150 cached files. Multiply by thousands of images and your storage explodes.
 
-2. **CDN is the cache**: The entire point of this architecture is to let your CDN cache the processed images at the edge. Configure your CDN to respect the `Cache-Control` headers (30 days by default) and you get global caching for free.
+2. **CDN is the cache**: The entire point of this architecture is to let your CDN cache the processed images at the
+   edge. Configure your CDN to respect the `Cache-Control` headers (30 days by default) and you get global caching for
+   free.
 
-3. **Simpler invalidation**: When you update an image, just change the `v` parameter. No need to purge server-side caches.
+3. **Simpler invalidation**: When you update an image, just change the `v` parameter. No need to purge server-side
+   caches.
 
-**Recommended setup**: Put Cloudflare, Fastly, or any CDN in front of your app. The first request processes the image, subsequent requests are served from CDN cache.
+**Recommended setup**: Put Cloudflare, Fastly, or any CDN in front of your app. The first request processes the image,
+subsequent requests are served from CDN cache.
 
 ## Requirements
 

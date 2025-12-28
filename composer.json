@@ -1,6 +1,6 @@
 {
-    "name": "tryhard/image-proxy",
-    "description": "A Laravel package for on-the-fly image resizing and format conversion",
+    "name": "aaronfrancis/imgproxy",
+    "description": "On-the-fly image resizing and format conversion for Laravel",
     "keywords": ["laravel", "image", "proxy", "resize", "optimization"],
     "license": "MIT",
     "require": {
@@ -17,18 +17,18 @@
     },
     "autoload": {
         "psr-4": {
-            "TryHard\\ImageProxy\\": "src/"
+            "AaronFrancis\\ImgProxy\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "TryHard\\ImageProxy\\Tests\\": "tests/"
+            "AaronFrancis\\ImgProxy\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "TryHard\\ImageProxy\\ImageProxyServiceProvider"
+                "AaronFrancis\\ImgProxy\\ImgProxyServiceProvider"
             ]
         }
     },

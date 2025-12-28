@@ -1,69 +1,100 @@
 <?php
 
-use TryHard\ImageProxy\PathValidator;
+use AaronFrancis\ImgProxy\PathValidator;
 
 it('allows any path by default', function () {
     $validator = new PathValidator;
 
-    expect($validator('public', 'anything/here.jpg'))->toBeTrue();
+    expect($validator->validate('anything/here.jpg'))->toBeTrue();
 });
 
 it('always blocks directory traversal', function () {
-    $validator = PathValidator::secure();
+    $validator = new PathValidator;
 
-    expect($validator('public', '../etc/passwd'))->toBeFalse();
-    expect($validator('public', 'images/../../../etc/passwd'))->toBeFalse();
-    expect($validator('public', 'images/photo.jpg'))->toBeTrue();
+    expect($validator->validate('../etc/passwd'))->toBeFalse();
+    expect($validator->validate('images/../../../etc/passwd'))->toBeFalse();
+    expect($validator->validate('images/photo.jpg'))->toBeTrue();
 });
 
 it('blocks traversal even with directories configured', function () {
-    $validator = PathValidator::directories('images');
+    $validator = PathValidator::directories(['images']);
 
-    expect($validator('public', 'images/../etc/passwd'))->toBeFalse();
+    expect($validator->validate('images/../etc/passwd'))->toBeFalse();
 });
 
 it('restricts to specific directories', function () {
-    $validator = PathValidator::directories('images', 'uploads');
+    $validator = PathValidator::directories(['images', 'uploads']);
 
-    expect($validator('public', 'images/photo.jpg'))->toBeTrue();
-    expect($validator('public', 'images/sub/photo.jpg'))->toBeTrue();
-    expect($validator('public', 'uploads/file.png'))->toBeTrue();
-    expect($validator('public', 'other/file.jpg'))->toBeFalse();
-    expect($validator('public', 'photo.jpg'))->toBeFalse();
+    expect($validator->validate('images/photo.jpg'))->toBeTrue();
+    expect($validator->validate('images/sub/photo.jpg'))->toBeTrue();
+    expect($validator->validate('uploads/file.png'))->toBeTrue();
+    expect($validator->validate('other/file.jpg'))->toBeFalse();
+    expect($validator->validate('photo.jpg'))->toBeFalse();
 });
 
 it('matches glob patterns with single wildcard', function () {
-    $validator = PathValidator::matches('images/*.jpg');
+    $validator = PathValidator::matches(['images/*.jpg']);
 
-    expect($validator('public', 'images/photo.jpg'))->toBeTrue();
-    expect($validator('public', 'images/test.jpg'))->toBeTrue();
-    expect($validator('public', 'images/sub/photo.jpg'))->toBeFalse();
-    expect($validator('public', 'images/photo.png'))->toBeFalse();
+    expect($validator->validate('images/photo.jpg'))->toBeTrue();
+    expect($validator->validate('images/test.jpg'))->toBeTrue();
+    expect($validator->validate('images/sub/photo.jpg'))->toBeFalse();
+    expect($validator->validate('images/photo.png'))->toBeFalse();
 });
 
 it('matches glob patterns with double wildcard', function () {
-    $validator = PathValidator::matches('images/**/*.jpg');
+    $validator = PathValidator::matches(['images/**/*.jpg']);
 
-    expect($validator('public', 'images/photo.jpg'))->toBeTrue();
-    expect($validator('public', 'images/sub/photo.jpg'))->toBeTrue();
-    expect($validator('public', 'images/a/b/c/photo.jpg'))->toBeTrue();
-    expect($validator('public', 'other/photo.jpg'))->toBeFalse();
+    expect($validator->validate('images/photo.jpg'))->toBeTrue();
+    expect($validator->validate('images/sub/photo.jpg'))->toBeTrue();
+    expect($validator->validate('images/a/b/c/photo.jpg'))->toBeTrue();
+    expect($validator->validate('other/photo.jpg'))->toBeFalse();
 });
 
 it('matches glob patterns with question mark', function () {
-    $validator = PathValidator::matches('img?.jpg');
+    $validator = PathValidator::matches(['img?.jpg']);
 
-    expect($validator('public', 'img1.jpg'))->toBeTrue();
-    expect($validator('public', 'imgA.jpg'))->toBeTrue();
-    expect($validator('public', 'img.jpg'))->toBeFalse();
-    expect($validator('public', 'img12.jpg'))->toBeFalse();
+    expect($validator->validate('img1.jpg'))->toBeTrue();
+    expect($validator->validate('imgA.jpg'))->toBeTrue();
+    expect($validator->validate('img.jpg'))->toBeFalse();
+    expect($validator->validate('img12.jpg'))->toBeFalse();
 });
 
 it('accepts multiple patterns', function () {
-    $validator = PathValidator::matches('images/*.jpg', 'photos/*.png');
+    $validator = PathValidator::matches(['images/*.jpg', 'photos/*.png']);
 
-    expect($validator('public', 'images/test.jpg'))->toBeTrue();
-    expect($validator('public', 'photos/test.png'))->toBeTrue();
-    expect($validator('public', 'images/test.png'))->toBeFalse();
-    expect($validator('public', 'other/test.jpg'))->toBeFalse();
+    expect($validator->validate('images/test.jpg'))->toBeTrue();
+    expect($validator->validate('photos/test.png'))->toBeTrue();
+    expect($validator->validate('images/test.png'))->toBeFalse();
+    expect($validator->validate('other/test.jpg'))->toBeFalse();
+});
+
+it('restricts by file extension', function () {
+    $validator = PathValidator::extensions(['jpg', 'png']);
+
+    expect($validator->validate('photo.jpg'))->toBeTrue();
+    expect($validator->validate('photo.JPG'))->toBeTrue();
+    expect($validator->validate('photo.png'))->toBeTrue();
+    expect($validator->validate('photo.gif'))->toBeFalse();
+    expect($validator->validate('photo.webp'))->toBeFalse();
+});
+
+it('chains directories and extensions', function () {
+    $validator = PathValidator::directories(['images'])
+        ->withExtensions(['jpg', 'png']);
+
+    expect($validator->validate('images/photo.jpg'))->toBeTrue();
+    expect($validator->validate('images/photo.png'))->toBeTrue();
+    expect($validator->validate('images/photo.gif'))->toBeFalse();
+    expect($validator->validate('uploads/photo.jpg'))->toBeFalse();
+});
+
+it('chains multiple restrictions', function () {
+    $validator = PathValidator::directories(['images', 'uploads'])
+        ->withExtensions(['jpg'])
+        ->matching(['**/*.jpg']);
+
+    expect($validator->validate('images/photo.jpg'))->toBeTrue();
+    expect($validator->validate('images/sub/photo.jpg'))->toBeTrue();
+    expect($validator->validate('images/photo.png'))->toBeFalse();
+    expect($validator->validate('other/photo.jpg'))->toBeFalse();
 });
