@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial Laravel image proxy package
-- Collection::explode macro for splitting strings in collections
+- Initial release of Laravel image proxy package
+- On-the-fly image resizing via URL parameters
+- Format conversion (jpg, png, gif, webp)
+- Fluent `imgproxy()` URL builder helper
+- Configurable sources with filesystem disk support
+- Path validation (directories, extensions, glob patterns)
+- Rate limiting for abuse prevention
+- CDN-friendly cache headers
 
-### Fixed
-- Collection::explode type handling for non-string values
-
-[Unreleased]: https://github.com/aarondfrancis/image-proxy/compare/HEAD
+[Unreleased]: https://github.com/aaronfrancis/imgproxy/compare/HEAD
