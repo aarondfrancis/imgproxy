@@ -96,6 +96,56 @@ updated.
 <img src="/w=400/media/uploads/photo.jpg">
 ```
 
+## URL Builder
+
+Use the fluent `imgproxy()` helper to generate URLs in your PHP code:
+
+```php
+// Basic usage
+imgproxy('images', 'photo.jpg')->width(400)
+// => /w=400/images/photo.jpg
+
+// Chain multiple options
+imgproxy('images', 'photo.jpg')
+    ->width(800)
+    ->height(600)
+    ->fit('cover')
+    ->quality(85)
+    ->webp()
+// => /w=800,h=600,fit=cover,q=85,f=webp/images/photo.jpg
+
+// Cache busting
+imgproxy('images', 'photo.jpg')->width(400)->v(2)
+// => /w=400,v=2/images/photo.jpg
+```
+
+The builder implements `Stringable` and `Htmlable`, so you can use it directly in Blade:
+
+```blade
+<img src="{{ imgproxy('images', 'hero.jpg')->width(800)->webp() }}">
+```
+
+### Available Methods
+
+| Method | Alias | Description |
+|--------|-------|-------------|
+| `width(int)` | `w()` | Set width in pixels |
+| `height(int)` | `h()` | Set height in pixels |
+| `quality(int)` | `q()` | Set quality (1-100) |
+| `format(string)` | `f()` | Set output format |
+| `fit(string)` | | Set fit mode |
+| `version(string)` | `v()` | Cache buster |
+| `webp()` | | Shortcut for `format('webp')` |
+| `png()` | | Shortcut for `format('png')` |
+| `jpg()` | | Shortcut for `format('jpg')` |
+| `gif()` | | Shortcut for `format('gif')` |
+| `cover()` | | Shortcut for `fit('cover')` |
+| `contain()` | | Shortcut for `fit('contain')` |
+| `scale()` | | Shortcut for `fit('scale')` |
+| `scaleDown()` | | Shortcut for `fit('scaledown')` |
+| `crop()` | | Shortcut for `fit('crop')` |
+| `url()` | | Get the URL string |
+
 ## Configuration
 
 ### Sources
@@ -287,17 +337,9 @@ Route::get('{options}/{source}/{path}', [ImgProxyController::class, 'show'])
 
 ## Why No Server-Side Cache?
 
-This package intentionally does not cache processed images on the server. Here's why:
-
-1. **Storage bloat**: Every combination of image + options creates a new file. A single image with 10 width variations,
-   3 formats, and 5 quality levels = 150 cached files. Multiply by thousands of images and your storage explodes.
-
-2. **CDN is the cache**: The entire point of this architecture is to let your CDN cache the processed images at the
-   edge. Configure your CDN to respect the `Cache-Control` headers (30 days by default) and you get global caching for
-   free.
-
-3. **Simpler invalidation**: When you update an image, just change the `v` parameter. No need to purge server-side
-   caches.
+This package intentionally does not cache processed images on the server. The entire point of this architecture is to
+let your CDN cache the processed images at the edge. Configure your CDN to respect the `Cache-Control` headers (30 days
+by default) and you get global caching for free.
 
 **Recommended setup**: Put Cloudflare, Fastly, or any CDN in front of your app. The first request processes the image,
 subsequent requests are served from CDN cache.
