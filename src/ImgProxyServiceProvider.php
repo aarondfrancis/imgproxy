@@ -17,9 +17,11 @@ class ImgProxyServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->publishes([
-            __DIR__.'/../config/imgproxy.php' => config_path('imgproxy.php'),
-        ], 'imgproxy-config');
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../config/imgproxy.php' => config_path('imgproxy.php'),
+            ], 'imgproxy-config');
+        }
 
         if (config('imgproxy.route.enabled', true)) {
             $this->registerRoutes();
