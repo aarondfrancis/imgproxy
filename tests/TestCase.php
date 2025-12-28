@@ -25,6 +25,10 @@ abstract class TestCase extends BaseTestCase
             'images' => [
                 'disk' => 'public',
             ],
+            // Additional sources for testing
+            'media' => [
+                'disk' => 'public',
+            ],
         ]);
     }
 }

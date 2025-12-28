@@ -4,52 +4,42 @@ namespace AaronFrancis\ImgProxy;
 
 use AaronFrancis\ImgProxy\Contracts\PathValidatorContract;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class ImgProxyService
 {
     /**
-     * Resolve a request path to disk, full path, and source config.
+     * Resolve a source and path to disk, full path, and source config.
      *
      * @return array{disk: string, path: string, config: array}
      *
-     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
      */
-    public function resolve(string $path): array
+    public function resolve(string $source, string $path): array
     {
         $sources = config('imgproxy.sources', []);
 
-        foreach ($sources as $prefix => $config) {
-            if ($prefix === '') {
-                continue;
-            }
-
-            if (! Str::startsWith($path, $prefix . '/')) {
-                continue;
-            }
-
-            $relativePath = Str::after($path, $prefix . '/');
-            $config = $this->normalizeConfig($config);
-
-            // Always block directory traversal first
-            abort_if(str_contains($relativePath, '..'), 403, 'Directory traversal not allowed');
-
-            // Build full path with root
-            $fullPath = $config['root']
-                ? rtrim($config['root'], '/') . '/' . $relativePath
-                : $relativePath;
-
-            // Validate the full path (user validator sees the complete path including root)
-            $this->validatePath($fullPath, $config);
-
-            return [
-                'disk' => $config['disk'],
-                'path' => $fullPath,
-                'config' => $config,
-            ];
+        if (! isset($sources[$source])) {
+            abort(404, 'Unknown source');
         }
 
-        abort(404, 'Unknown source');
+        $config = $this->normalizeConfig($sources[$source]);
+
+        // Always block directory traversal first
+        abort_if(str_contains($path, '..'), 403, 'Directory traversal not allowed');
+
+        // Build full path with root
+        $fullPath = $config['root']
+            ? rtrim($config['root'], '/') . '/' . $path
+            : $path;
+
+        // Validate the full path (user validator sees the complete path including root)
+        $this->validatePath($fullPath, $config);
+
+        return [
+            'disk' => $config['disk'],
+            'path' => $fullPath,
+            'config' => $config,
+        ];
     }
 
     /**

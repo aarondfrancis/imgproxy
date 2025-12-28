@@ -257,6 +257,26 @@ it('validates root directory with PathValidator', function () {
     Storage::disk('public')->delete('uploads/photo.jpg');
 });
 
+it('supports nested paths with slashes', function () {
+    // Create image in nested directory
+    $image = imagecreatetruecolor(100, 100);
+    ob_start();
+    imagejpeg($image);
+    $imageData = ob_get_clean();
+    imagedestroy($image);
+
+    Storage::disk('public')->put('photos/2024/january/photo.jpg', $imageData);
+
+    $response = $this->get('/w=50/images/photos/2024/january/photo.jpg');
+
+    $response->assertStatus(200);
+
+    $image = imagecreatefromstring($response->getContent());
+    expect(imagesx($image))->toBe(50);
+
+    Storage::disk('public')->delete('photos/2024/january/photo.jpg');
+});
+
 it('rejects paths outside allowed directories even with root', function () {
     config(['imgproxy.sources.media' => [
         'disk' => 'public',

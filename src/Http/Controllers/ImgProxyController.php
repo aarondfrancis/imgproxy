@@ -23,13 +23,13 @@ class ImgProxyController extends Controller
         protected ImgProxyService $service
     ) {}
 
-    public function show(Request $request, string $options, string $path): Response
+    public function show(Request $request, string $options, string $source, string $path): Response
     {
         if ($this->shouldRateLimit()) {
-            $this->rateLimit($request, $path);
+            $this->rateLimit($request, $source . '/' . $path);
         }
 
-        $resolved = $this->service->resolve($path);
+        $resolved = $this->service->resolve($source, $path);
         $imageData = $this->service->loadImage($resolved['disk'], $resolved['path']);
 
         $extension = pathinfo($resolved['path'], PATHINFO_EXTENSION);

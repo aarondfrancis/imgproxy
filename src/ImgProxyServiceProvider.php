@@ -29,19 +29,21 @@ class ImgProxyServiceProvider extends ServiceProvider
     protected function registerRoutes(): void
     {
         $config = config('imgproxy.route', []);
+        $sources = array_keys(config('imgproxy.sources', []));
 
         Route::middleware($config['middleware'] ?? [])
-            ->group(function () use ($config) {
+            ->group(function () use ($config, $sources) {
                 $prefix = $config['prefix'] ?? null;
                 $name = $config['name'] ?? 'imgproxy.show';
 
                 $uri = $prefix
-                    ? "{$prefix}/{options}/{path}"
-                    : "{options}/{path}";
+                    ? "{$prefix}/{options}/{source}/{path}"
+                    : "{options}/{source}/{path}";
 
                 Route::get($uri, [ImgProxyController::class, 'show'])
                     ->where('options', '([a-zA-Z]+=[a-zA-Z0-9]+,?)+')
-                    ->where('path', '.*\.[a-zA-Z0-9]+')
+                    ->whereIn('source', $sources)
+                    ->where('path', '.+\.[a-zA-Z0-9]+')
                     ->name($name);
             });
     }
