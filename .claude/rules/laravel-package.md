@@ -165,22 +165,126 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
 }
 ```
 
+**Testing workflow**:
+```json
+// composer.json scripts
+"scripts": {
+    "test": "phpunit",
+    "test:coverage": "phpunit --coverage-html coverage",
+    "test:filter": "phpunit --filter"
+}
+```
+
+```bash
+# Run all tests
+composer test
+
+# Run specific test
+composer test:filter TestClassName
+
+# Run with coverage
+composer test:coverage
+```
+
+**Test structure**:
+```
+tests/
+├── TestCase.php          # Base test class
+├── Feature/              # Integration tests
+│   └── ServiceTest.php
+└── Unit/                 # Unit tests
+    └── HelperTest.php
+```
+
+**phpunit.xml**:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit colors="true" bootstrap="vendor/autoload.php">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory suffix="Test.php">./tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory suffix="Test.php">./tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory suffix=".php">./src</directory>
+        </include>
+    </source>
+</phpunit>
+```
+
+### Laravel Pint (Code Style)
+
+```json
+// composer.json
+"require-dev": {
+    "laravel/pint": "^1.0"
+},
+"scripts": {
+    "lint": "pint --test",
+    "fix": "pint"
+}
+```
+
+```php
+// pint.json
+{
+    "preset": "laravel",
+    "rules": {
+        "concat_space": { "spacing": "none" }
+    }
+}
+```
+
+**Auto-fix workflow**:
+1. Run `composer fix` before committing
+2. CI runs `composer lint` to verify style
+3. Pre-commit hook (optional): `vendor/bin/pint --dirty`
+
 ### GitHub Actions CI
 
 ```yaml
-strategy:
-  matrix:
-    php: [8.2, 8.3]
-    laravel: [10.*, 11.*]
-    include:
-      - laravel: 10.*
-        testbench: 8.*
-      - laravel: 11.*
-        testbench: 9.*
-steps:
-  - run: composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-update
-  - run: composer update --prefer-stable
-  - run: vendor/bin/phpunit
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php: [8.2, 8.3]
+        laravel: [10.*, 11.*]
+        include:
+          - laravel: 10.*
+            testbench: 8.*
+          - laravel: 11.*
+            testbench: 9.*
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-update
+          composer update --prefer-stable --no-interaction
+
+      - name: Check code style
+        run: vendor/bin/pint --test
+
+      - name: Run tests
+        run: vendor/bin/phpunit
 ```
 
 ### Blade Components
