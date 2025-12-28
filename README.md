@@ -145,8 +145,9 @@ PathValidator::matches(['images/**/*.jpg', 'photos/*.png'])
 // Only allow certain extensions
 PathValidator::extensions(['jpg', 'png'])
 
-// Combine them
-PathValidator::directories(['images','uploads'])->extensions(['jpg', 'png'])
+// Combine them (chain in any order)
+PathValidator::directories(['images', 'uploads'])->extensions(['jpg', 'png'])
+PathValidator::extensions(['jpg', 'png'])->directories(['images', 'uploads'])
 ```
 
 Using the `matches` validator, the follow syntax applies:

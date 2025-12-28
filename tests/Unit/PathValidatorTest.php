@@ -1,15 +1,16 @@
 <?php
 
 use AaronFrancis\ImgProxy\PathValidator;
+use AaronFrancis\ImgProxy\PathValidatorBuilder;
 
 it('allows any path by default', function () {
-    $validator = new PathValidator;
+    $validator = new PathValidatorBuilder;
 
     expect($validator->validate('anything/here.jpg'))->toBeTrue();
 });
 
 it('always blocks directory traversal', function () {
-    $validator = new PathValidator;
+    $validator = new PathValidatorBuilder;
 
     expect($validator->validate('../etc/passwd'))->toBeFalse();
     expect($validator->validate('images/../../../etc/passwd'))->toBeFalse();
@@ -80,7 +81,7 @@ it('restricts by file extension', function () {
 
 it('chains directories and extensions', function () {
     $validator = PathValidator::directories(['images'])
-        ->withExtensions(['jpg', 'png']);
+        ->extensions(['jpg', 'png']);
 
     expect($validator->validate('images/photo.jpg'))->toBeTrue();
     expect($validator->validate('images/photo.png'))->toBeTrue();
@@ -90,11 +91,22 @@ it('chains directories and extensions', function () {
 
 it('chains multiple restrictions', function () {
     $validator = PathValidator::directories(['images', 'uploads'])
-        ->withExtensions(['jpg'])
-        ->matching(['**/*.jpg']);
+        ->extensions(['jpg'])
+        ->matches(['**/*.jpg']);
 
     expect($validator->validate('images/photo.jpg'))->toBeTrue();
     expect($validator->validate('images/sub/photo.jpg'))->toBeTrue();
     expect($validator->validate('images/photo.png'))->toBeFalse();
     expect($validator->validate('other/photo.jpg'))->toBeFalse();
+});
+
+it('chains in any order', function () {
+    $validator1 = PathValidator::extensions(['jpg'])->directories(['images']);
+    $validator2 = PathValidator::directories(['images'])->extensions(['jpg']);
+
+    expect($validator1->validate('images/photo.jpg'))->toBeTrue();
+    expect($validator1->validate('images/photo.png'))->toBeFalse();
+
+    expect($validator2->validate('images/photo.jpg'))->toBeTrue();
+    expect($validator2->validate('images/photo.png'))->toBeFalse();
 });
