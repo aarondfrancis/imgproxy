@@ -31,11 +31,16 @@ class ImgProxyService
             $relativePath = Str::after($path, $prefix . '/');
             $config = $this->normalizeConfig($config);
 
-            $this->validatePath($relativePath, $config);
+            // Always block directory traversal first
+            abort_if(str_contains($relativePath, '..'), 403, 'Directory traversal not allowed');
 
+            // Build full path with root
             $fullPath = $config['root']
                 ? rtrim($config['root'], '/') . '/' . $relativePath
                 : $relativePath;
+
+            // Validate the full path (user validator sees the complete path including root)
+            $this->validatePath($fullPath, $config);
 
             return [
                 'disk' => $config['disk'],
@@ -68,15 +73,12 @@ class ImgProxyService
     }
 
     /**
-     * Validate the path against security and custom validators.
+     * Validate the path against custom validators.
      *
      * @throws \Symfony\Component\HttpKernel\Exception\HttpException
      */
-    protected function validatePath(string $path, array $config): void
+    protected function validatePath(string $fullPath, array $config): void
     {
-        // Always block directory traversal
-        abort_if(str_contains($path, '..'), 403, 'Directory traversal not allowed');
-
         $validator = $config['validator'];
 
         if (! $validator) {
@@ -88,9 +90,9 @@ class ImgProxyService
         }
 
         if ($validator instanceof PathValidatorContract) {
-            abort_unless($validator->validate($path), 403, 'Path not allowed');
+            abort_unless($validator->validate($fullPath), 403, 'Path not allowed');
         } elseif (is_callable($validator)) {
-            abort_unless($validator($path), 403, 'Path not allowed');
+            abort_unless($validator($fullPath), 403, 'Path not allowed');
         }
     }
 

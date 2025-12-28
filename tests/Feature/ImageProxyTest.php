@@ -194,3 +194,90 @@ it('uses root path from source config', function () {
 
     Storage::disk('public')->delete('uploads/photo.jpg');
 });
+
+it('passes full path including root to validator', function () {
+    $receivedPath = null;
+
+    // Create a validator that captures the path it receives
+    $validator = new class implements \AaronFrancis\ImgProxy\Contracts\PathValidatorContract {
+        public static ?string $receivedPath = null;
+
+        public function validate(string $path): bool
+        {
+            self::$receivedPath = $path;
+            return true;
+        }
+    };
+
+    config(['imgproxy.sources.media' => [
+        'disk' => 'public',
+        'root' => 'uploads/images',
+        'validator' => $validator,
+    ]]);
+
+    // Create image in the root directory
+    $image = imagecreatetruecolor(100, 100);
+    ob_start();
+    imagejpeg($image);
+    $imageData = ob_get_clean();
+    imagedestroy($image);
+
+    Storage::disk('public')->put('uploads/images/photo.jpg', $imageData);
+
+    $response = $this->get('/w=50/media/photo.jpg');
+
+    $response->assertStatus(200);
+
+    // Validator should receive the FULL path including root
+    expect($validator::$receivedPath)->toBe('uploads/images/photo.jpg');
+
+    Storage::disk('public')->delete('uploads/images/photo.jpg');
+});
+
+it('validates root directory with PathValidator', function () {
+    config(['imgproxy.sources.media' => [
+        'disk' => 'public',
+        'root' => 'uploads',
+        'validator' => \AaronFrancis\ImgProxy\PathValidator::directories(['uploads']),
+    ]]);
+
+    // Create image in the root directory
+    $image = imagecreatetruecolor(100, 100);
+    ob_start();
+    imagejpeg($image);
+    $imageData = ob_get_clean();
+    imagedestroy($image);
+
+    Storage::disk('public')->put('uploads/photo.jpg', $imageData);
+
+    $response = $this->get('/w=50/media/photo.jpg');
+
+    $response->assertStatus(200);
+
+    Storage::disk('public')->delete('uploads/photo.jpg');
+});
+
+it('rejects paths outside allowed directories even with root', function () {
+    config(['imgproxy.sources.media' => [
+        'disk' => 'public',
+        'root' => 'uploads',
+        // Only allow uploads/safe, not uploads root
+        'validator' => \AaronFrancis\ImgProxy\PathValidator::directories(['uploads/safe']),
+    ]]);
+
+    // Create image in root (not in safe subdirectory)
+    $image = imagecreatetruecolor(100, 100);
+    ob_start();
+    imagejpeg($image);
+    $imageData = ob_get_clean();
+    imagedestroy($image);
+
+    Storage::disk('public')->put('uploads/photo.jpg', $imageData);
+
+    $response = $this->get('/w=50/media/photo.jpg');
+
+    // Should be rejected because uploads/photo.jpg is not in uploads/safe/
+    $response->assertStatus(403);
+
+    Storage::disk('public')->delete('uploads/photo.jpg');
+});
