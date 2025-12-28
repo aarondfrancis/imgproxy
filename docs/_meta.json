@@ -1,0 +1,12 @@
+{
+    "title": "ImgProxy for Laravel",
+    "description": "On-the-fly image resizing and format conversion for Laravel",
+    "pages": [
+        { "slug": "index", "title": "Introduction" },
+        { "slug": "installation", "title": "Installation" },
+        { "slug": "usage", "title": "Usage" },
+        { "slug": "url-builder", "title": "URL Builder" },
+        { "slug": "configuration", "title": "Configuration" },
+        { "slug": "path-validation", "title": "Path Validation" }
+    ]
+}
