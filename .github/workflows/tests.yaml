@@ -1,0 +1,47 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_call:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3', '8.4', '8.5']
+        laravel: ['10.*', '11.*', '12.*']
+        dependency-version: [prefer-lowest, prefer-stable]
+        exclude:
+          # Laravel 10: PHP 8.1-8.3
+          - php: '8.4'
+            laravel: '10.*'
+          - php: '8.5'
+            laravel: '10.*'
+          # Laravel 11: PHP 8.2-8.4
+          - php: '8.5'
+            laravel: '11.*'
+
+    name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.dependency-version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: gd
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer require "laravel/framework:${{ matrix.laravel }}" --no-update
+          composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction
+
+      - name: Run tests
+        run: vendor/bin/pest
