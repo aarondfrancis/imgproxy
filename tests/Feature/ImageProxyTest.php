@@ -157,6 +157,12 @@ it('rejects invalid fit mode', function () {
     $response->assertStatus(400);
 });
 
+it('rejects disallowed format', function () {
+    $response = $this->get('/format=bmp/images/test-image.jpg');
+
+    $response->assertStatus(400);
+});
+
 it('rejects dimensions exceeding max', function () {
     $response = $this->get('/w=5000/images/test-image.jpg');
 
